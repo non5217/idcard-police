@@ -1,0 +1,17 @@
+# Configuration files
+config.php
+.env*
+
+# Logs
+*.log
+error_log
+
+# Uploads and temporary files
+uploads/*
+!uploads/.gitkeep
+tmp/*
+!tmp/.gitkeep
+
+# OS generated files
+.DS_Store
+Thumbs.db

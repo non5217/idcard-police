@@ -1,0 +1,403 @@
+<?php
+// idcard/admin_report.php
+require_once 'connect.php';
+require_once 'admin_auth.php'; // 🔒 เฉพาะ Admin
+
+// 🛑 ตรวจสอบสิทธิ์ (หน้านี้ให้เฉพาะ Super_Admin หรือ Admin ดูได้)
+if (empty($_SESSION['role']) || !in_array($_SESSION['role'], ['Super_Admin', 'Admin'])) {
+    die("
+        <div style='text-align:center; padding: 50px; font-family: sans-serif;'>
+            <h1 style='color: red;'>⛔ Access Denied</h1>
+            <p>เฉพาะ Super_Admin หรือ Admin เท่านั้นที่สามารถดูรายงานและประวัติการใช้งานได้</p>
+            <a href='admin_dashboard.php'>กลับหน้าหลัก</a>
+        </div>
+    ");
+}
+
+// 🟢 กำหนด Tab ปัจจุบัน (ค่าเริ่มต้นคือ report)
+$active_tab = $_GET['tab'] ?? 'report';
+
+// =========================================================
+// 🟢 1. ส่วนระบบ Export ไฟล์ข้อมูลเป็น CSV (Excel)
+// =========================================================
+if (isset($_GET['export_year'])) {
+    $export_year = (int)$_GET['export_year'];
+    
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="IDCard_Report_Year_' . $export_year . '.csv"');
+    
+    $output = fopen('php://output', 'w');
+    fputs($output, "\xEF\xBB\xBF"); // ใส่ BOM
+    
+    fputcsv($output, ['ลำดับ', 'เลขทะเบียนบัตร', 'ประเภทบัตร', 'ยศ', 'ชื่อ-สกุล', 'ตำแหน่ง', 'สังกัด', 'วันที่ออกบัตร', 'วันหมดอายุ', 'สถานะ']);
+    
+    $sql_export = "SELECT r.generated_card_no, t.type_name, k.rank_name, r.full_name, r.position, o.org_name, r.issue_date, r.expire_date, r.status
+            FROM idcard_requests r
+            LEFT JOIN idcard_ranks k ON r.rank_id = k.id
+            LEFT JOIN idcard_organizations o ON r.org_id = o.id
+            LEFT JOIN idcard_card_types t ON r.card_type_id = t.id
+            WHERE r.card_year = ? AND r.status IN ('SENT_TO_PRINT', 'READY_PICKUP', 'COMPLETED')
+            ORDER BY r.card_sequence ASC";
+            
+    $stmt_export = $conn->prepare($sql_export);
+    $stmt_export->execute([$export_year]);
+    
+    $i = 1;
+    while ($row = $stmt_export->fetch(PDO::FETCH_ASSOC)) {
+        $status_label = [
+            'SENT_TO_PRINT' => 'ส่งพิมพ์บัตรแล้ว',
+            'READY_PICKUP' => 'รอรับบัตร',
+            'COMPLETED' => 'รับบัตรแล้ว (จบงาน)'
+        ][$row['status']] ?? $row['status'];
+
+        $issue_th = (!empty($row['issue_date']) && $row['issue_date'] != '0000-00-00') ? date('d/m/', strtotime($row['issue_date'])) . (date('Y', strtotime($row['issue_date'])) + 543) : '-';
+        $expire_th = '-';
+        if ($row['expire_date'] === '9999-12-31') {
+            $expire_th = 'ตลอดชีพ';
+        } elseif (!empty($row['expire_date']) && $row['expire_date'] != '0000-00-00') {
+            $expire_th = date('d/m/', strtotime($row['expire_date'])) . (date('Y', strtotime($row['expire_date'])) + 543);
+        }
+
+        fputcsv($output, [
+            $i++, $row['generated_card_no'], $row['type_name'], $row['rank_name'], $row['full_name'],
+            $row['position'], $row['org_name'], $issue_th, $expire_th, $status_label
+        ]);
+    }
+    fclose($output);
+    exit();
+}
+
+// =========================================================
+// 🟢 2. ดึงข้อมูลสำหรับตารางสรุปสถิติ (Report Tab)
+// =========================================================
+$types_stmt = $conn->query("SELECT id, type_name FROM idcard_card_types ORDER BY id ASC");
+$all_types = $types_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$sql_summary = "SELECT r.card_year, r.card_type_id, COUNT(r.id) as total,
+                       SUM(CASE WHEN r.print_count > 1 THEN r.print_count - 1 ELSE 0 END) as defective_total
+                FROM idcard_requests r
+                WHERE r.status IN ('SENT_TO_PRINT', 'READY_PICKUP', 'COMPLETED') 
+                  AND r.card_year IS NOT NULL AND r.card_year > 0
+                GROUP BY r.card_year, r.card_type_id
+                ORDER BY r.card_year DESC";
+$summary_stmt = $conn->query($sql_summary);
+$raw_data = $summary_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$report_data = [];
+$grand_total = 0; 
+$grand_defective = 0;
+foreach ($raw_data as $row) {
+    $year = $row['card_year'];
+    $type_id = $row['card_type_id'];
+    if (!isset($report_data[$year])) $report_data[$year] = ['total_year' => 0, 'defective_year' => 0];
+    
+    $report_data[$year][$type_id] = $row['total'];
+    $report_data[$year]['total_year'] += $row['total'];
+    $report_data[$year]['defective_year'] += (int)$row['defective_total'];
+    
+    $grand_total += $row['total'];
+    $grand_defective += (int)$row['defective_total'];
+}
+
+// =========================================================
+// 🟢 3. ดึงข้อมูลประวัติการใช้งาน (Logs Tab)
+// =========================================================
+$limit = 100;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
+$search = trim($_GET['search'] ?? '');
+$filter_user = trim($_GET['filter_user'] ?? '');
+$filter_action = trim($_GET['filter_action'] ?? '');
+
+$where_sql = "1=1";
+$params = [];
+
+if ($search !== '') {
+    $where_sql .= " AND (l.action_detail LIKE ? OR l.user_identifier LIKE ?)";
+    $params[] = "%$search%"; $params[] = "%$search%";
+}
+if ($filter_user !== '') {
+    $where_sql .= " AND l.user_type = ?"; $params[] = $filter_user;
+}
+if ($filter_action !== '') {
+    $where_sql .= " AND l.action_type LIKE ?"; $params[] = "%$filter_action%";
+}
+
+$stmt_total = $conn->prepare("SELECT COUNT(*) FROM idcard_logs l WHERE $where_sql");
+$stmt_total->execute($params);
+$total_logs = $stmt_total->fetchColumn();
+$total_pages = ceil($total_logs / $limit);
+
+$stmt = $conn->prepare("
+    SELECT l.*, 
+           c.first_name AS admin_fname, 
+           c.last_name AS admin_lname, 
+           c.rank AS admin_rank,
+           (SELECT full_name FROM idcard_requests r WHERE CAST(r.id_card_number AS BINARY) = CAST(l.user_identifier AS BINARY) ORDER BY id DESC LIMIT 1) AS public_fullname
+    FROM idcard_logs l
+    LEFT JOIN central_users c ON (l.user_type = 'ADMIN' AND l.user_identifier = c.id)
+    WHERE $where_sql 
+    ORDER BY l.created_at DESC 
+    LIMIT $limit OFFSET $offset
+");
+$stmt->execute($params);
+$logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// สร้าง Query String สำหรับแบ่งหน้า โดยผูก Tab เข้าไปด้วย
+$query_string = "&tab=logs&search=" . urlencode($search) . "&filter_user=" . urlencode($filter_user) . "&filter_action=" . urlencode($filter_action);
+
+function getActionBadge($type) {
+    if (strpos($type, 'VIEW') !== false) return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (strpos($type, 'UPDATE') !== false || strpos($type, 'CHANGE') !== false || strpos($type, 'EDIT') !== false || strpos($type, 'SETTING') !== false) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (strpos($type, 'DELETE') !== false || strpos($type, 'REVOKE') !== false) return 'bg-red-100 text-red-800 border-red-200';
+    if (strpos($type, 'CREATE') !== false || strpos($type, 'ADD') !== false || strpos($type, 'ASSIGN') !== false) return 'bg-green-100 text-green-800 border-green-200';
+    return 'bg-gray-100 text-gray-800 border-gray-200';
+}
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>รายงานและประวัติการใช้งาน - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> 
+        body { font-family: 'Sarabun', sans-serif; } 
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-100 pb-20">
+
+    <?php include 'admin_navbar.php'; ?>
+
+    <div class="container mx-auto mt-8 p-4 max-w-7xl">
+        
+        <div class="border-b border-gray-300 mb-6">
+            <nav class="-mb-px flex space-x-6">
+                <a href="?tab=report" class="<?= $active_tab == 'report' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?> whitespace-nowrap py-4 px-4 border-b-4 font-bold text-lg transition flex items-center gap-2">
+                    <i class="fas fa-chart-bar"></i> รายงานสถิติ
+                </a>
+                <a href="?tab=logs" class="<?= $active_tab == 'logs' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?> whitespace-nowrap py-4 px-4 border-b-4 font-bold text-lg transition flex items-center gap-2">
+                    <i class="fas fa-history"></i> ประวัติการใช้งาน (Logs)
+                </a>
+            </nav>
+        </div>
+
+        <div class="<?= $active_tab == 'report' ? 'block' : 'hidden' ?> animate-[fadeIn_0.3s_ease-out]">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">สรุปจำนวนบัตรแยกตามปี พ.ศ. และประเภทบัตร</h2>
+                <div class="flex flex-col md:flex-row gap-3">
+                    <div class="bg-blue-900 text-white px-6 py-2 rounded-lg shadow-md font-bold text-lg">
+                        ยอดออกบัตรสะสมทั้งหมด: <span class="text-yellow-300 text-2xl"><?= number_format($grand_total) ?></span> ใบ
+                    </div>
+                    <div class="bg-red-900 text-white px-6 py-2 rounded-lg shadow-md font-bold text-lg">
+                        ยอดบัตรเสียสะสม: <span class="text-yellow-300 text-2xl"><?= number_format($grand_defective) ?></span> ใบ
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-blue-600">
+                <?php if (empty($report_data)): ?>
+                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded text-center">
+                        <i class="fas fa-info-circle"></i> ยังไม่มีข้อมูลการออกบัตรในระบบ
+                    </div>
+                <?php else: ?>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full bg-white text-center">
+                            <thead class="bg-gray-200 text-gray-700">
+                                <tr>
+                                    <th class="py-3 px-4 font-bold border-b border-r text-left">ปี พ.ศ.</th>
+                                    <?php foreach ($all_types as $type): ?>
+                                        <th class="py-3 px-4 font-bold border-b border-r"><?= htmlspecialchars($type['type_name']) ?></th>
+                                    <?php endforeach; ?>
+                                    <th class="py-3 px-4 font-bold border-b border-r bg-red-100 text-red-900">บัตรเสีย (ใบ)</th>
+                                    <th class="py-3 px-4 font-bold border-b border-r bg-blue-100 text-blue-900">รวมทั้งหมด (ใบ)</th>
+                                    <th class="py-3 px-4 font-bold border-b">ดาวน์โหลดข้อมูล</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($report_data as $year => $data): ?>
+                                    <tr class="border-b hover:bg-gray-50 transition">
+                                        <td class="py-3 px-4 border-r text-left font-bold text-lg text-gray-800"><?= $year ?></td>
+                                        <?php foreach ($all_types as $type): $count = isset($data[$type['id']]) ? $data[$type['id']] : 0; ?>
+                                            <td class="py-3 px-4 border-r text-gray-600"><?= $count > 0 ? number_format($count) : '<span class="text-gray-300">-</span>' ?></td>
+                                        <?php endforeach; ?>
+                                        <td class="py-3 px-4 border-r font-bold text-red-700 bg-red-50/50"><?= number_format($data['defective_year']) ?></td>
+                                        <td class="py-3 px-4 border-r font-bold text-blue-700 bg-blue-50/50"><?= number_format($data['total_year']) ?></td>
+                                        <td class="py-3 px-4">
+                                            <a href="admin_report.php?export_year=<?= $year ?>" class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold shadow transition"><i class="fas fa-file-excel"></i> Export CSV</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+                <p class="text-xs text-gray-500 mt-4">* หมายเหตุ: ระบบจะนับและ Export เฉพาะคำขอที่มีสถานะ "ส่งพิมพ์บัตรแล้ว", "รอรับบัตร" และ "รับบัตรแล้ว" เท่านั้น</p>
+            </div>
+        </div>
+
+        <div class="<?= $active_tab == 'logs' ? 'block' : 'hidden' ?> animate-[fadeIn_0.3s_ease-out]">
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border border-gray-200">
+                <form action="" method="GET" class="flex flex-col md:flex-row gap-3">
+                    <input type="hidden" name="tab" value="logs">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">กลุ่มผู้ใช้งาน</label>
+                        <select name="filter_user" class="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
+                            <option value="">-- ทั้งหมด --</option>
+                            <option value="ADMIN" <?= $filter_user === 'ADMIN' ? 'selected' : '' ?>>👨‍✈️ เจ้าหน้าที่ (Admin)</option>
+                            <option value="PUBLIC" <?= $filter_user === 'PUBLIC' ? 'selected' : '' ?>>🧑 ประชาชน (Public)</option>
+                            <option value="GUEST" <?= $filter_user === 'GUEST' ? 'selected' : '' ?>>👤 ผู้เยี่ยมชม (Guest)</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">ประเภทการทำงาน</label>
+                        <select name="filter_action" class="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
+                            <option value="">-- ทั้งหมด --</option>
+                            <option value="VIEW" <?= $filter_action === 'VIEW' ? 'selected' : '' ?>>👁️ เปิดดูข้อมูล</option>
+                            <option value="CREATE" <?= $filter_action === 'CREATE' ? 'selected' : '' ?>>➕ สร้างใหม่</option>
+                            <option value="UPDATE" <?= $filter_action === 'UPDATE' ? 'selected' : '' ?>>✏️ แก้ไข/อัปเดต</option>
+                            <option value="STATUS" <?= $filter_action === 'STATUS' ? 'selected' : '' ?>>🔄 เปลี่ยนสถานะ</option>
+                            <option value="DELETE" <?= $filter_action === 'DELETE' ? 'selected' : '' ?>>❌ ลบข้อมูล</option>
+                            <option value="SETTING" <?= $filter_action === 'SETTING' ? 'selected' : '' ?>>⚙️ ตั้งค่าระบบ</option>
+                        </select>
+                    </div>
+                    <div class="flex-2">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">ค้นหารายละเอียด / ID</label>
+                        <div class="flex">
+                            <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="พิมพ์คำค้นหา..." class="border p-2 rounded-l-lg outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-64 bg-gray-50">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-r-lg shadow transition"><i class="fas fa-search"></i> ค้นหา</button>
+                        </div>
+                    </div>
+                    <?php if($search || $filter_user || $filter_action): ?>
+                        <div class="flex items-end">
+                            <a href="admin_report.php?tab=logs" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-sm transition whitespace-nowrap h-[42px] flex items-center">
+                                <i class="fas fa-times mr-1"></i> ล้างตัวกรอง
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border-t-4 border-indigo-500">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr>
+                                <th class="p-3 border-b text-center">วัน-เวลา</th>
+                                <th class="p-3 border-b">ผู้กระทำ</th>
+                                <th class="p-3 border-b text-center">ประเภท (Action)</th>
+                                <th class="p-3 border-b w-1/3">รายละเอียด</th>
+                                <th class="p-3 border-b">IP Address</th>
+                                <th class="p-3 border-b text-center">ข้อมูลเชิงลึก</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if(count($logs) > 0): foreach($logs as $l): ?>
+                                <tr class="border-b hover:bg-indigo-50 transition">
+                                    <td class="p-3 text-center whitespace-nowrap">
+                                        <div class="font-bold text-gray-700"><?= date('d/m/Y', strtotime($l['created_at'])) ?></div>
+                                        <div class="text-xs text-gray-500"><?= date('H:i:s', strtotime($l['created_at'])) ?> น.</div>
+                                    </td>
+                                    <td class="p-3">
+                                        <?php 
+                                            $display_name = htmlspecialchars($l['user_identifier']);
+                                            $sub_text = $l['user_type'];
+                                            if ($l['user_type'] === 'ADMIN' && !empty($l['admin_fname'])) {
+                                                $display_name = htmlspecialchars(($l['admin_rank'] ?? '') . $l['admin_fname'] . ' ' . $l['admin_lname']);
+                                                $sub_text = "Admin ID: " . $l['user_identifier'];
+                                            } elseif ($l['user_type'] === 'PUBLIC' && !empty($l['public_fullname'])) {
+                                                $display_name = htmlspecialchars($l['public_fullname']);
+                                                $sub_text = "ประชาชน (ID: " . $l['user_identifier'] . ")";
+                                            } elseif ($l['user_type'] === 'GUEST') {
+                                                $display_name = "บุคคลทั่วไป / ระบบ";
+                                            }
+                                        ?>
+                                        <div class="font-bold text-indigo-800"><?= $display_name ?></div>
+                                        <div class="text-[11px] text-gray-500"><i class="fas fa-user-tag"></i> <?= $sub_text ?></div>
+                                    </td>
+                                    <td class="p-3 text-center"><span class="px-2 py-1 border rounded text-[11px] font-bold whitespace-nowrap <?= getActionBadge($l['action_type']) ?>"><?= $l['action_type'] ?></span></td>
+                                    <td class="p-3 text-gray-700 leading-tight">
+                                        <?= htmlspecialchars($l['action_detail']) ?>
+                                        <?php if($l['target_id']): ?><div class="text-xs text-blue-500 mt-1 font-semibold">Target ID: #<?= $l['target_id'] ?></div><?php endif; ?>
+                                    </td>
+                                    <td class="p-3"><div class="text-xs font-mono bg-gray-100 p-1 rounded inline-block"><?= htmlspecialchars($l['ip_address']) ?></div></td>
+                                    <td class="p-3 text-center">
+                                        <?php if(!empty($l['old_data']) || !empty($l['new_data'])): ?>
+                                            <button type="button" onclick="viewDataModal(this)" data-old="<?= htmlspecialchars($l['old_data'] ?? '{}', ENT_QUOTES, 'UTF-8') ?>" data-new="<?= htmlspecialchars($l['new_data'] ?? '{}', ENT_QUOTES, 'UTF-8') ?>" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold transition"><i class="fas fa-code"></i> ดูข้อมูล</button>
+                                        <?php else: ?><span class="text-xs text-gray-400">-</span><?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; else: ?>
+                                <tr><td colspan="6" class="p-8 text-center text-gray-500 font-bold bg-gray-50">ไม่พบประวัติการใช้งานที่ตรงกับเงื่อนไข</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <?php if($total_pages > 1): ?>
+                <div class="p-4 bg-gray-50 border-t flex flex-wrap justify-center gap-1 text-sm">
+                    <?php if($page > 1): ?>
+                        <a href="?page=1<?= $query_string ?>" class="px-3 py-1 bg-white border rounded text-gray-600 hover:bg-gray-100">&laquo; หน้าแรก</a>
+                        <a href="?page=<?= $page-1 ?><?= $query_string ?>" class="px-3 py-1 bg-white border rounded text-gray-600 hover:bg-gray-100">&lt;</a>
+                    <?php endif; ?>
+                    <?php 
+                        $start_p = max(1, $page - 3); $end_p = min($total_pages, $page + 3);
+                        for($i = $start_p; $i <= $end_p; $i++): $active = ($i == $page) ? 'bg-indigo-600 text-white border-indigo-600 font-bold' : 'bg-white text-gray-600 hover:bg-gray-100';
+                    ?>
+                        <a href="?page=<?= $i ?><?= $query_string ?>" class="px-3 py-1 border rounded <?= $active ?>"><?= $i ?></a>
+                    <?php endfor; ?>
+                    <?php if($page < $total_pages): ?>
+                        <a href="?page=<?= $page+1 ?><?= $query_string ?>" class="px-3 py-1 bg-white border rounded text-gray-600 hover:bg-gray-100">&gt;</a>
+                        <a href="?page=<?= $total_pages ?><?= $query_string ?>" class="px-3 py-1 bg-white border rounded text-gray-600 hover:bg-gray-100">หน้าสุดท้าย &raquo;</a>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="dataModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform transition-transform scale-100">
+            <div class="flex justify-between items-center p-4 border-b bg-gray-50 rounded-t-xl">
+                <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-database text-indigo-600"></i> ข้อมูลที่มีการเปลี่ยนแปลง (Data Diff)</h3>
+                <button onclick="document.getElementById('dataModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="flex-1 p-4 overflow-hidden flex flex-col md:flex-row gap-4">
+                <div class="flex-1 flex flex-col">
+                    <h4 class="font-bold text-red-600 mb-2 bg-red-100 p-2 rounded text-sm"><i class="fas fa-minus-circle"></i> ข้อมูลเดิม (Old Data)</h4>
+                    <pre id="modal_old_data" class="bg-gray-800 text-green-400 p-4 rounded-lg text-xs font-mono overflow-auto custom-scroll flex-1 h-64 md:h-full"></pre>
+                </div>
+                <div class="flex-1 flex flex-col">
+                    <h4 class="font-bold text-green-600 mb-2 bg-green-100 p-2 rounded text-sm"><i class="fas fa-plus-circle"></i> ข้อมูลใหม่ (New Data)</h4>
+                    <pre id="modal_new_data" class="bg-gray-800 text-yellow-300 p-4 rounded-lg text-xs font-mono overflow-auto custom-scroll flex-1 h-64 md:h-full"></pre>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t bg-gray-50 flex justify-end rounded-b-xl">
+                <button onclick="document.getElementById('dataModal').classList.add('hidden')" class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg font-bold shadow transition">ปิดหน้าต่าง</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatJSON(jsonStr) {
+            if (!jsonStr || jsonStr === 'null' || jsonStr === '') return 'ไม่มีข้อมูล (NULL)';
+            try { return JSON.stringify(JSON.parse(jsonStr), null, 4); } catch (e) { return jsonStr; }
+        }
+
+        function viewDataModal(btn) {
+            document.getElementById('modal_old_data').textContent = formatJSON(btn.getAttribute('data-old'));
+            document.getElementById('modal_new_data').textContent = formatJSON(btn.getAttribute('data-new'));
+            document.getElementById('dataModal').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

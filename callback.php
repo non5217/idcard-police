@@ -77,8 +77,8 @@ if (!$user_data || !isset($user_data['id'])) {
 session_regenerate_id(true); // 🟢 เพิ่มบรรทัดนี้! ล้างรหัสคุกกี้เก่าทิ้ง สร้างคุกกี้ใหม่ทันทีหลังล็อกอิน ป้องกันการสวมรอย 100%
 
 $_SESSION['user_id'] = $user_data['id'];
-$_SESSION['fullname'] = ($user_data['first_name'] ?? '') . ' ' . ($user_data['last_name'] ?? '');
-$_SESSION['id_card'] = $user_data['id_card'] ?? ''; 
+$_SESSION['fullname'] = ($user_data['rank'] ?? '') . ($user_data['first_name'] ?? '') . ' ' . ($user_data['last_name'] ?? '');
+$_SESSION['id_card'] = $user_data['id_card'] ?? '';
 $_SESSION['access_token'] = $access_token;
 
 // ดึง Role จากตารางในฐานข้อมูล (ถ้ามี)
@@ -92,12 +92,13 @@ $_SESSION['role'] = $staff ? $staff['role'] : 'User';
 // 5. บันทึก Log การเข้าใช้งาน
 $ip = $_SERVER['REMOTE_ADDR'];
 $conn->prepare("INSERT INTO idcard_audit_logs (user_id, action, details, ip_address) VALUES (?, 'LOGIN', 'เข้าสู่ระบบสำเร็จ', ?)")
-     ->execute([$user_data['id'], $ip]);
+    ->execute([$user_data['id'], $ip]);
 
 // 6. ส่งไปหน้า Dashboard หรือ Admin ตาม Role
 if ($_SESSION['role'] === 'User') {
     header("Location: index.php");
-} else {
+}
+else {
     header("Location: admin_dashboard.php");
 }
 exit();

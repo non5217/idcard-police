@@ -6,9 +6,11 @@
 ![License](https://img.shields.io/badge/license-Private-red?style=for-the-badge)
 
 <p align="center">
-  <img src="https://img2.pic.in.th/idcard_preview_v150_1.png" alt="IDCard System Preview" width="100%" style="border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+  <img src="https://nont-rtp.com/upload/api/uploads/kobkob772/kobkob772-20260306-5379b3.png" alt="IDCard System Preview" width="100%" style="border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
 </p>
-
+<p align="center">
+  <img src="https://nont-rtp.com/upload/api/uploads/kobkob772/kobkob772-20260306-93edb5.png" alt="IDCard System Preview" width="100%" style="border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+</p>
 > **"มาตรฐานใหม่ของการออกบัตรประจำตัวข้าราชการ ด้วยความแม่นยำ ปลอดภัย และอัจฉริยะ"**
 > แพลตฟอร์มบริหารจัดการคำขอเพื่อมีบัตรประจำตัวเจ้าหน้าที่ของรัฐ แบบครบวงจร (End-to-End) พลิกโฉมการทำงานตั้งแต่การยื่นคำขอออนไลน์ จนถึงการพิมพ์บัตรตัวจริง พร้อมมาตรฐาน PDPA และเทคโนโลยีการประมวลผลภาพขั้นสูง (Advanced Image Processing)
 

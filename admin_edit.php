@@ -1106,15 +1106,17 @@ endif; ?>
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'
-            }).then(res => res.jso.then(d                                 S                                     if                                              n
-                        // Append newly create                        o UI
-                        const container = document.getEle                        ainer');
-            const noMsg = document                        notes_msg');
-            noMsg.remove();                              // Format date
-                        con                        e(data.note.created_at);
-            const formattedDate = dateObj.toLocaleDateString('en-GB') + ' ' + dateObj.toLocaleTimeString('e                        git', minute: '2-digit' });
+            }).then(res => res.json()).then(data => {
+                if (data.status === 'success') {
+                    // Append newly created note UI
+                    const container = document.getElementById('notes_container');
+                    const noMsg = document.getElementById('no_notes_msg');
+                    if (noMsg) noMsg.remove();
+                    // Format date
+                    const dateObj = new Date(data.note.created_at);
+                    const formattedDate = dateObj.toLocaleDateString('en-GB') + ' ' + dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-        const newNoteHTML = `
+                    const newNoteHTML = `
                         <div class="relative flex items-start gap-4 md:justify-center animate-[fadeIn_0.5s_ease-out]">
                             <div class="absolute left-0 md:left-1/2 w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow -ml-[7px] md:-ml-2 mt-1.5 z-10"></div>
                             <div class="bg-green-50 p-4 rounded-xl shadow-sm border border-green-200 w-full md:w-[45%] md:mr-auto md:ml-0 text-sm relative">
@@ -1129,17 +1131,25 @@ endif; ?>
                                 </div>
                                 <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">${data.note.note_text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
                             </div>
-                            </div>
+                        </div>
                     `;
-        c, newNoteHTM                                 Swal.fir                                    toast: true,
-            position: 'to                                        icon: 'success',
-        title: 'บันทึกข้อความสำ                                       s                        lse,                                                                         });
-                    } else {
-            Swal.f                    ลา                sag                ารถบันทึกข้อความ
-        })
-                .catch (err => {
-            console.error                              l.fiดข้อผิดพลาด', 'ปัญหาการเชื่อมต่อเซิร์ฟเวอร์', 'error');
-        });
+                    container.insertAdjacentHTML('afterbegin', newNoteHTML);
+                    noteInput.value = '';
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'บันทึกข้อความสำเร็จ',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด', data.message || 'ไม่สามารถบันทึกข้อความได้', 'error');
+                }
+            }).catch(err => {
+                console.error(err);
+                Swal.fire('เกิดข้อผิดพลาด', 'ปัญหาการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+            });
         }
     </script>
 

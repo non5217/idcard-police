@@ -63,6 +63,23 @@ $reason_detail = $_POST['request_reason_detail'] ?? '';
 $reason_other = $_POST['request_reason_other'] ?? '';
 $old_card_num = $_POST['old_card_number'] ?? '';
 
+// 🟢 Backend Validation for Request Reason and Detail
+if ($reason === 'NEW') {
+    $valid_new_details = ['EXPIRED', 'LOST'];
+    if (!in_array($reason_detail, $valid_new_details)) {
+        die("Error: กรุณาเลือกเหตุผลขอมีบัตรใหม่ ('บัตรหมดอายุ' หรือ 'บัตรหาย/ถูกทำลาย') อย่างน้อย 1 ตัวเลือก");
+    }
+}
+elseif ($reason === 'CHANGE') {
+    $valid_change_details = ['CHANGE_POS', 'CHANGE_NAME', 'CHANGE_SURNAME', 'CHANGE_BOTH', 'DAMAGED', 'RETIRED', 'OTHER'];
+    if (!in_array($reason_detail, $valid_change_details)) {
+        die("Error: กรุณาเลือกเหตุผลขอเปลี่ยนบัตร อย่างน้อย 1 ตัวเลือก");
+    }
+    if ($reason_detail === 'OTHER' && empty(trim($reason_other))) {
+        die("Error: กรุณาระบุเหตุผลอื่นๆ สำหรับขอเปลี่ยนบัตร");
+    }
+}
+
 // 1. ระบุตำแหน่งถอยหลัง 2 ก้าว (โดยยังไม่ใช้ realpath)
 $upload_dir = __DIR__ . '/../../secure_uploads/';
 
@@ -135,21 +152,28 @@ elseif (empty($edit_id)) {
 
 // 3.2 เอกสารแนบ
 $seq_counter = 2;
-$documents_arr = [];
+$new_documents_arr = [];
 
-// 🟢 เรียกใช้ฟังก์ชันดึงไฟล์ Async ที่อัปไว้มารวมกัน
-moveAsyncUpload('doc_idcard_house', $documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
-moveAsyncUpload('doc_position', $documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
-moveAsyncUpload('doc_rank', $documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
-moveAsyncUpload('doc_lost', $documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
-moveAsyncUpload('doc_blood', $documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
-// ถ้าไม่ได้อัปโหลดเอกสารใหม่ และอยู่ในโหมดแก้ไข ให้ใช้ไฟล์เดิม
-if (empty($documents_arr) && !empty($old_req['documents_json'])) {
-    $documents_json = $old_req['documents_json'];
+// 🟢 เรียกใช้ฟังก์ชันดึงไฟล์ Async ที่อัปไว้มารวมกัน (ดึงให้ครบทุกช่องทางการอัปโหลด)
+moveAsyncUpload('doc_idcard_house', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_position', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_rank', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_old_card', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_blood', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_lost', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_name_change', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_surname_change', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+moveAsyncUpload('doc_retired', $new_documents_arr, $seq_counter, $id_card_number, $first_name, $upload_dir);
+
+// 🟢 โหมดแก้ไข: เอาไฟล์เก่าที่เคยอัปโหลดไว้มารวมกับไฟล์ใหม่ ไม่เขียนทับ
+$old_documents_arr = [];
+if (!empty($edit_id) && !empty($old_req['documents_json'])) {
+    $old_documents_arr = json_decode($old_req['documents_json'], true) ?? [];
 }
-else {
-    $documents_json = json_encode($documents_arr, JSON_UNESCAPED_UNICODE);
-}
+
+$final_documents_arr = array_merge($old_documents_arr, $new_documents_arr);
+
+$documents_json = json_encode($final_documents_arr, JSON_UNESCAPED_UNICODE);
 
 // 3.3 ลายเซ็น (รองรับทั้งวาดและอัปโหลด)
 $sig_path = $old_req['signature_file'] ?? '';

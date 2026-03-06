@@ -274,7 +274,7 @@ $current_date_th = date('d') . ' / ' . date('m') . ' / ' . (date('Y') + 543);
                                 <?php foreach ($rank_sort_order as $rid):
     if (isset($ranks_by_id[$rid])):
         $r = $ranks_by_id[$rid]; ?>
-                                <option value="<?= $r['id']?>" <?=val('rank_id')==$r['id'] ? 'selected' : '' ?>>
+                                <option value="<?= $r['id']?>" <?= val('rank_id') == $r['id'] ? 'selected' : ''?>>
                                     <?= $r['rank_name']?>
                                 </option>
                                 <?php
@@ -316,7 +316,7 @@ endforeach; ?>
                             <select name="blood_type" required class="input-field">
                                 <option value="">-- เลือก --</option>
                                 <?php foreach (['O', 'A', 'B', 'AB'] as $b): ?>
-                                <option value="<?= $b?>" <?=val('blood_type')==$b ? 'selected' : '' ?>>
+                                <option value="<?= $b?>" <?= val('blood_type') == $b ? 'selected' : ''?>>
                                     <?= $b?>
                                 </option>
                                 <?php
@@ -389,13 +389,13 @@ endforeach; ?>
                     <div class="mb-4">
                         <label class="inline-flex items-center">
                             <input type="radio" name="contact_address_type" value="SAME"
-                                <?=val('contact_address_type', 'SAME' )=='SAME' ? 'checked' : '' ?>
+                                <?= val('contact_address_type', 'SAME') == 'SAME' ? 'checked' : ''?>
                             onchange="toggleContactAddress()" class="form-radio text-blue-600">
                             <span class="ml-2">เหมือนที่อยู่ตามทะเบียนบ้าน</span>
                         </label>
                         <label class="inline-flex items-center ml-6">
                             <input type="radio" name="contact_address_type" value="OTHER"
-                                <?=val('contact_address_type')=='OTHER' ? 'checked' : '' ?>
+                                <?= val('contact_address_type') == 'OTHER' ? 'checked' : ''?>
                             onchange="toggleContactAddress()" class="form-radio text-blue-600">
                             <span class="ml-2">ที่อยู่อื่น</span>
                         </label>
@@ -415,7 +415,7 @@ endforeach; ?>
                             <select name="card_type_id" required class="input-field">
                                 <option value="">-- เลือกประเภทบัตร --</option>
                                 <?php foreach ($card_types as $ct): ?>
-                                <option value="<?= $ct['id']?>" <?=val('card_type_id')==$ct['id'] ? 'selected' : '' ?>>
+                                <option value="<?= $ct['id']?>" <?= val('card_type_id') == $ct['id'] ? 'selected' : ''?>>
                                     <?= $ct['type_name']?>
                                 </option>
                                 <?php
@@ -425,11 +425,11 @@ endforeach; ?>
                         <div>
                             <label class="label">ประเภทเจ้าหน้าที่ <span class="text-red-500">*</span></label>
                             <select name="officer_type" required class="input-field">
-                                <option value="POLICE" <?=val('officer_type')=='POLICE' ? 'selected' : '' ?>
+                                <option value="POLICE" <?= val('officer_type') == 'POLICE' ? 'selected' : ''?>
                                     >ข้าราชการตำรวจ</option>
-                                <option value="PERMANENT_EMP" <?=val('officer_type')=='PERMANENT_EMP' ? 'selected' : ''
-                                    ?>>ลูกจ้างประจำ</option>
-                                <option value="GOV_EMP" <?=val('officer_type')=='GOV_EMP' ? 'selected' : '' ?>
+                                <option value="PERMANENT_EMP" <?= val('officer_type') == 'PERMANENT_EMP' ? 'selected' : ''
+    ?>>ลูกจ้างประจำ</option>
+                                <option value="GOV_EMP" <?= val('officer_type') == 'GOV_EMP' ? 'selected' : ''?>
                                     >พนักงานราชการ</option>
                             </select>
                         </div>
@@ -466,7 +466,7 @@ endforeach; ?>
                             <select name="org_id" class="input-field">
                                 <option value="">-- เลือกสังกัด --</option>
                                 <?php foreach ($orgs as $o): ?>
-                                <option value="<?= $o['id']?>" <?=val('org_id')==$o['id'] ? 'selected' : '' ?>>
+                                <option value="<?= $o['id']?>" <?= val('org_id') == $o['id'] ? 'selected' : ''?>>
                                     <?= $o['org_name']?>
                                 </option>
                                 <?php
@@ -495,8 +495,8 @@ endforeach; ?>
 
                     <div class="mb-2">
                         <label class="inline-flex items-center font-bold">
-                            <input type="radio" name="request_reason" value="FIRST" <?=val('request_reason')=='FIRST'
-                                ? 'checked' : '' ?> onclick="toggleReason(); updateRequiredDocs();" required
+                            <input type="radio" name="request_reason" value="FIRST" <?= val('request_reason') == 'FIRST'
+    ? 'checked' : ''?> onclick="toggleReason(); updateRequiredDocs();" required
                             class="form-radio h-5 w-5 text-blue-600">
                             <span class="ml-2">1. ขอมีบัตรครั้งแรก (บรรจุครั้งแรก)</span>
                         </label>
@@ -504,19 +504,19 @@ endforeach; ?>
 
                     <div class="mb-2">
                         <label class="inline-flex items-center font-bold">
-                            <input type="radio" name="request_reason" value="NEW" <?=val('request_reason')=='NEW'
-                                ? 'checked' : '' ?> onclick="toggleReason(); updateRequiredDocs();" required
+                            <input type="radio" name="request_reason" value="NEW" <?= val('request_reason') == 'NEW'
+    ? 'checked' : ''?> onclick="toggleReason(); updateRequiredDocs();" required
                             class="form-radio h-5 w-5 text-blue-600">
                             <span class="ml-2">2. ขอมีบัตรใหม่ เนื่องจาก</span>
                         </label>
                         <div class="ml-8 mt-1 space-y-2 hidden" id="reason_new_options">
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="EXPIRED" <?=val('request_reason_detail')=='EXPIRED' ? 'checked' : '' ?>
+                                    value="EXPIRED" <?= val('request_reason_detail') == 'EXPIRED' ? 'checked' : ''?>
                                 onclick="checkCardWarning(this); updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">บัตรหมดอายุ</span></label>
                             <label class="inline-flex items-center ml-4"><input type="radio"
-                                    name="request_reason_detail" value="LOST" <?=val('request_reason_detail')=='LOST'
-                                    ? 'checked' : '' ?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    name="request_reason_detail" value="LOST" <?= val('request_reason_detail') == 'LOST'
+    ? 'checked' : ''?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">บัตรหาย/ถูกทำลาย</span></label>
                             <div class="mt-2"><label class="text-xs text-gray-600 block mb-1">ระบุเลขทะเบียนบัตรเดิม
                                     (ถ้ามี)</label><input type="text" name="old_card_number"
@@ -527,39 +527,39 @@ endforeach; ?>
 
                     <div class="mb-2">
                         <label class="inline-flex items-center font-bold">
-                            <input type="radio" name="request_reason" value="CHANGE" <?=val('request_reason')=='CHANGE'
-                                ? 'checked' : '' ?> onclick="toggleReason(); updateRequiredDocs();" required
+                            <input type="radio" name="request_reason" value="CHANGE" <?= val('request_reason') == 'CHANGE'
+    ? 'checked' : ''?> onclick="toggleReason(); updateRequiredDocs();" required
                             class="form-radio h-5 w-5 text-blue-600">
                             <span class="ml-2">3. ขอเปลี่ยนบัตร เนื่องจาก</span>
                         </label>
                         <div class="ml-8 mt-1 grid grid-cols-1 md:grid-cols-2 gap-2 hidden" id="reason_change_options">
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_POS" <?=val('request_reason_detail')=='CHANGE_POS' ? 'checked' : '' ?>
+                                    value="CHANGE_POS" <?= val('request_reason_detail') == 'CHANGE_POS' ? 'checked' : ''?>
                                 onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เลื่อนยศ/ตำแหน่ง</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_NAME" <?=val('request_reason_detail')=='CHANGE_NAME' ? 'checked' : ''
-                                    ?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    value="CHANGE_NAME" <?= val('request_reason_detail') == 'CHANGE_NAME' ? 'checked' : ''
+    ?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เปลี่ยนชื่อตัว</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_SURNAME" <?=val('request_reason_detail')=='CHANGE_SURNAME' ? 'checked'
-                                    : '' ?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    value="CHANGE_SURNAME" <?= val('request_reason_detail') == 'CHANGE_SURNAME' ? 'checked'
+    : ''?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เปลี่ยนชื่อสกุล</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_BOTH" <?=val('request_reason_detail')=='CHANGE_BOTH' ? 'checked' : ''
-                                    ?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    value="CHANGE_BOTH" <?= val('request_reason_detail') == 'CHANGE_BOTH' ? 'checked' : ''
+    ?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เปลี่ยนชื่อและสกุล</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="DAMAGED" <?=val('request_reason_detail')=='DAMAGED' ? 'checked' : '' ?>
+                                    value="DAMAGED" <?= val('request_reason_detail') == 'DAMAGED' ? 'checked' : ''?>
                                 onclick="checkCardWarning(this); updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">ชำรุด</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="RETIRED" <?=val('request_reason_detail')=='RETIRED' ? 'checked' : '' ?>
+                                    value="RETIRED" <?= val('request_reason_detail') == 'RETIRED' ? 'checked' : ''?>
                                 onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เกษียณ</span></label>
                             <div class="col-span-2 flex items-center">
                                 <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                        value="OTHER" <?=val('request_reason_detail')=='OTHER' ? 'checked' : '' ?>
+                                        value="OTHER" <?= val('request_reason_detail') == 'OTHER' ? 'checked' : ''?>
                                     onclick="updateRequiredDocs();" class="form-radio"><span
                                         class="ml-2 whitespace-nowrap mr-2">อื่นๆ</span></label>
                                 <input type="text" name="request_reason_other" value="<?= val('request_reason_other')?>"
@@ -662,7 +662,8 @@ endif; ?>
 
                             <div id="box_doc_blood"
                                 class="hidden flex flex-col gap-2 p-4 bg-white border border-blue-200 rounded shadow-sm">
-                                <label class="font-semibold text-blue-900">📌 แนบใบรับรองผลการตรวจหมู่โลหิต<span
+                                <label class="font-semibold text-blue-900">📌
+                                    แนบใบรับรองผลการตรวจหมู่โลหิต/บัตรที่หน่วยงานรัฐออกให้ แสดงถึงหมู่เลือด<span
                                         class="text-red-500">*</span></label>
                                 <input type="file" name="doc_blood" id="doc_blood" accept=".pdf,.jpg,.png"
                                     class="w-full text-sm">
@@ -843,8 +844,8 @@ endif; ?>
     </div>
 
     <script>
-        const maxUploadBytes = <?= $max_bytes ?>;
-        const maxUploadMB = <?= $max_mb ?>;
+        const maxUploadBytes = <?= $max_bytes?>;
+        const maxUploadMB = <?= $max_mb?>;
 
         // --- Address & Date ---
         $(document).ready(function () {
@@ -894,7 +895,7 @@ endif; ?>
         // --- Awesomplete ---
         const posInput = document.getElementById('position_input');
         const orgSelect = document.querySelector('select[name="org_id"]');
-        const posAutoMap = <?= $pos_auto_map_json ?>;
+        const posAutoMap = <?= $pos_auto_map_json?>;
 
         if (posInput && orgSelect) {
             const awesomplete = new Awesomplete(posInput, { list: "#pos_list", minChars: 0, maxItems: 15, autoFirst: true });
@@ -1128,7 +1129,7 @@ endif; ?>
         document.getElementById('requestForm').addEventListener('submit', function (e) {
             if (uploadsInProgress > 0) { e.preventDefault(); Swal.fire('รอสักครู่', 'มีไฟล์กำลังอัปโหลดอยู่ กรุณารอให้อัปโหลดเสร็จทุกไฟล์ก่อนกดยืนยันครับ', 'warning'); return; }
 
-            let isEditMode = <?= $is_edit ? 'true' : 'false' ?>;
+            let isEditMode = <?= $is_edit ? 'true' : 'false'?>;
             let sigMethod = document.querySelector('input[name="sig_method"]:checked').value;
             let croppedPhoto = document.getElementById('cropped_photo_data').value;
             let processedSig = document.getElementById('signature_data').value;

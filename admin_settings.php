@@ -22,9 +22,16 @@ function getBase64Img($path)
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $swal_back = function ($icon, $title, $text) {
+        return "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><body style='background:#f3f4f6;'><script>document.addEventListener('DOMContentLoaded', function () { Swal.fire({ icon: '$icon', title: '$title', text: '$text', confirmButtonColor: '#3085d6' }).then(() => { window.history.back(); }); });</script></body>";
+    };
+    $swal_reload = function ($icon, $title, $text) {
+        return "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><body style='background:#f3f4f6;'><script>document.addEventListener('DOMContentLoaded', function () { Swal.fire({ icon: '$icon', title: '$title', text: '$text', confirmButtonColor: '#3085d6' }).then(() => { window.location.href = 'admin_settings.php'; }); });</script></body>";
+    };
+
     // 🟢 ตรวจสอบ CSRF Token ก่อนยอมให้ตั้งค่าระบบ
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("<script>alert('⛔ Security Error: ตรวจพบความพยายามเจาะระบบ (CSRF)'); window.history.back();</script>");
+        die($swal_back('error', 'Security Error', '⛔ ตรวจพบความพยายามเจาะระบบ (CSRF)'));
     }
 
     $action = $_POST['action'] ?? '';
@@ -39,8 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $current_max = (int)$stmt_check->fetchColumn();
 
         if ($seq <= $current_max) {
-            echo "<script>alert('❌ ตั้งค่าไม่สำเร็จ! เลขที่ตั้ง ($seq) ต้องมากกว่าเลขสูงสุดปัจจุบันในระบบ ($current_max)'); window.history.back();</script>";
-            exit();
+            die($swal_back('error', 'ผิดพลาด', "❌ ตั้งค่าไม่สำเร็จ! เลขที่ตั้ง ($seq) ต้องมากกว่าเลขสูงสุดปัจจุบันในระบบ ($current_max)"));
         }
         else {
             $ct_id = $conn->query("SELECT id FROM idcard_card_types LIMIT 1")->fetchColumn() ?: 1;
@@ -62,8 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // บันทึก Log การตั้งค่าเลขรันนิ่ง
             saveLog($conn, 'SETTING_SEQUENCE', "ตั้งค่าเลขลำดับเริ่มต้น ปี $year เป็น $seq", null, ['old_max' => $current_max], ['new_sequence' => $seq, 'year' => $year]);
 
-            echo "<script>alert('✅ ตั้งค่าเลขล่าสุดสำเร็จ! (เลขต่อไปที่จะถูกรันคือ " . ($seq + 1) . ")'); window.location.href = 'admin_settings.php';</script>";
-            exit();
+            die($swal_reload('success', 'สำเร็จ', "✅ ตั้งค่าเลขล่าสุดสำเร็จ! (เลขต่อไปที่จะถูกรันคือ " . ($seq + 1) . ")"));
         }
     }
 
@@ -83,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ext = strtolower(pathinfo($_FILES['signature_file']['name'], PATHINFO_EXTENSION));
             $allowed_exts = ['png', 'jpg', 'jpeg'];
             if (!in_array($ext, $allowed_exts)) {
-                die("<script>alert('⛔ Error: ไม่อนุญาตให้อัปโหลดไฟล์สกุล .$ext'); window.history.back();</script>");
+                die($swal_back('error', 'ข้อผิดพลาด', "⛔ Error: ไม่อนุญาตให้อัปโหลดไฟล์สกุล .$ext"));
             }
 
             $target = $upload_dir . "sig_" . strtolower($type) . "_" . time() . "_" . uniqid() . "." . $ext;
@@ -234,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['csv_file']['tmp_name'])) {
             $ext = strtolower(pathinfo($_FILES['csv_file']['name'], PATHINFO_EXTENSION));
             if ($ext !== 'csv') {
-                die("<script>alert('⛔ Error: กรุณาอัปโหลดไฟล์นามสกุล .csv เท่านั้น'); window.history.back();</script>");
+                die($swal_back('error', 'ข้อผิดพลาด', "⛔ Error: กรุณาอัปโหลดไฟล์นามสกุล .csv เท่านั้น"));
             }
 
             $handle = fopen($_FILES['csv_file']['tmp_name'], "r");
@@ -343,8 +348,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     if (isset($msg)) {
-        echo "<script>alert('$msg'); window.location.href = 'admin_settings.php';</script>";
-        exit();
+        $icon = (strpos($msg, '❌') !== false || strpos($msg, 'Error') !== false) ? 'error' : 'success';
+        $title = $icon === 'error' ? 'เกิดข้อผิดพลาด' : 'สำเร็จ';
+        die($swal_reload($icon, $title, $msg));
     }
 }
 
@@ -381,6 +387,7 @@ $current_max_seq = (int)$stmt_max->fetchColumn();
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
@@ -463,7 +470,7 @@ $current_max_seq = (int)$stmt_max->fetchColumn();
                                         class="h-8 max-w-[100px] object-contain"></td>
                                 <td class="p-2 border text-center">
                                     <form action="" method="POST"
-                                        onsubmit="return confirm('ยืนยันการลบลายเซ็นนี้? (ถ้าถูกใช้ไปแล้วระบบจะปฏิเสธการลบ)');">
+                                        onsubmit="event.preventDefault(); swalConfirm(event, 'ยืนยันการลบลายเซ็นนี้? (ถ้าถูกใช้ไปแล้วระบบจะปฏิเสธการลบ)');">
                                         <input type="hidden" name="csrf_token"
                                             value="<?= $_SESSION['csrf_token']?>"><input type="hidden" name="action"
                                             value="delete_signer"><input type="hidden" name="signer_id"
@@ -533,7 +540,8 @@ endforeach; ?>
                                 <td class="p-2 border"><img src="<?= getBase64Img($i['signature_path'])?>"
                                         class="h-8 max-w-[100px] object-contain"></td>
                                 <td class="p-2 border text-center">
-                                    <form action="" method="POST" onsubmit="return confirm('ยืนยันการลบ?');"><input
+                                    <form action="" method="POST"
+                                        onsubmit="event.preventDefault(); swalConfirm(event, 'ยืนยันการลบ?');"><input
                                             type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>"><input
                                             type="hidden" name="action" value="delete_signer"><input type="hidden"
                                             name="signer_id" value="<?= $i['id']?>"><button type="submit"
@@ -584,7 +592,7 @@ endforeach; ?>
                                         onclick="editOrg(<?= $o['id']?>, '<?= htmlspecialchars(addslashes($o['org_name']))?>')"
                                         class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">แก้ไข</button>
                                     <form action="" method="POST"
-                                        onsubmit="return confirm('คำเตือน: หากลบถาวร ข้อมูลบัตรเก่าที่ผูกกับหน่วยงานนี้อาจสูญหาย ยืนยันการลบ?');">
+                                        onsubmit="event.preventDefault(); swalConfirm(event, 'คำเตือน: หากลบถาวร ข้อมูลบัตรเก่าที่ผูกกับหน่วยงานนี้อาจสูญหาย ยืนยันการลบ?');">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                                         <input type="hidden" name="action" value="delete_org"><input type="hidden"
                                             name="org_id" value="<?= $o['id']?>">
@@ -680,7 +688,7 @@ endforeach; ?>
                                         onclick="editPosition(<?= $p['id']?>, '<?= htmlspecialchars(addslashes($p['position_name']))?>', '<?= $p['default_org_id'] ?? ''?>')"
                                         class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">แก้ไข</button>
                                     <form action="" method="POST"
-                                        onsubmit="return confirm('ยืนยันการลบตำแหน่งนี้ออกจากระบบตัวเลือก?');">
+                                        onsubmit="event.preventDefault(); swalConfirm(event, 'ยืนยันการลบตำแหน่งนี้ออกจากระบบตัวเลือก?');">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                                         <input type="hidden" name="action" value="delete_position"><input type="hidden"
                                             name="pos_id" value="<?= $p['id']?>">
@@ -740,7 +748,7 @@ endforeach; ?>
                     <div>
                         <button type="submit"
                             class="w-full bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow hover:bg-yellow-700 transition"
-                            onclick="return confirm('ยืนยันการตั้งค่าเลขลำดับล่าสุดหรือไม่?\n\n(ระบบจะสร้างข้อมูลจำลองเพื่อเป็นฐานให้เลขถัดไป)');">
+                            onclick="event.preventDefault(); swalConfirm(event, 'ยืนยันการตั้งค่าเลขลำดับล่าสุดหรือไม่? (ระบบจะสร้างข้อมูลจำลองเพื่อเป็นฐานให้เลขถัดไป)', false);">
                             <i class="fas fa-save"></i> บันทึกตั้งค่าเลข
                         </button>
                     </div>
@@ -957,6 +965,27 @@ endforeach; ?>
 
             // โชว์หน้าต่าง Modal
             document.getElementById('editPosModal').classList.remove('hidden');
+        }
+
+        // Global function for SweetAlert Confirm
+        function swalConfirm(event, text, isDanger = true) {
+            event.preventDefault(); // Stop standard form submission
+            const form = event.target.closest('form') || event.target;
+
+            Swal.fire({
+                title: 'ยืนยันการทำรายการ?',
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: isDanger ? '#d33' : '#3085d6',
+                cancelButtonColor: isDanger ? '#3085d6' : '#d33',
+                confirmButtonText: isDanger ? '🗑️ ยืนยันลบ' : '✅ ยืนยัน',
+                cancelButtonText: '❌ ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
         }
     </script>
 </body>

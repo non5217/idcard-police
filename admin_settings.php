@@ -31,17 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // --- 🟢 ระบบตั้งค่าเลขรันนิ่งล่าสุด ---
     if ($action === 'set_last_sequence') {
-        $year = (int) $_POST['card_year'];
-        $seq = (int) $_POST['last_sequence'];
+        $year = (int)$_POST['card_year'];
+        $seq = (int)$_POST['last_sequence'];
 
         $stmt_check = $conn->prepare("SELECT MAX(card_sequence) FROM idcard_requests WHERE card_year = ?");
         $stmt_check->execute([$year]);
-        $current_max = (int) $stmt_check->fetchColumn();
+        $current_max = (int)$stmt_check->fetchColumn();
 
         if ($seq <= $current_max) {
             echo "<script>alert('❌ ตั้งค่าไม่สำเร็จ! เลขที่ตั้ง ($seq) ต้องมากกว่าเลขสูงสุดปัจจุบันในระบบ ($current_max)'); window.history.back();</script>";
             exit();
-        } else {
+        }
+        else {
             $ct_id = $conn->query("SELECT id FROM idcard_card_types LIMIT 1")->fetchColumn() ?: 1;
             $rk_id = $conn->query("SELECT id FROM idcard_ranks LIMIT 1")->fetchColumn() ?: 1;
             $og_id = $conn->query("SELECT id FROM idcard_organizations LIMIT 1")->fetchColumn() ?: 1;
@@ -61,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // บันทึก Log การตั้งค่าเลขรันนิ่ง
             saveLog($conn, 'SETTING_SEQUENCE', "ตั้งค่าเลขลำดับเริ่มต้น ปี $year เป็น $seq", null, ['old_max' => $current_max], ['new_sequence' => $seq, 'year' => $year]);
 
-            echo "<script>alert('✅ ตั้งค่าเลขล่าสุดสำเร็จ! (เลขต่อไปที่จะถูกรันคือ " . ($seq + 1) . ")'); window.location.href='admin_settings.php';</script>";
+            echo "<script>alert('✅ ตั้งค่าเลขล่าสุดสำเร็จ! (เลขต่อไปที่จะถูกรันคือ " . ($seq + 1) . ")'); window.location.href = 'admin_settings.php';</script>";
             exit();
         }
     }
@@ -99,7 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msg = "เพิ่มข้อมูลลายเซ็นสำเร็จ";
             }
         }
-    } elseif ($action === 'set_active_signer') {
+    }
+    elseif ($action === 'set_active_signer') {
         $id = $_POST['signer_id'];
         $type = $_POST['signer_type'];
 
@@ -109,7 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // บันทึก Log เลือกผู้ลงนาม
         saveLog($conn, 'SETTING_SIGNER', "ตั้งค่าให้ ID: $id เป็นผู้ลงนาม/ตรวจบัตรหลัก ($type)", $id);
         $msg = "เปลี่ยนผู้ลงนามปัจจุบันเรียบร้อยแล้ว";
-    } elseif ($action === 'delete_signer') {
+    }
+    elseif ($action === 'delete_signer') {
         $id = $_POST['signer_id'];
         try {
             $stmt = $conn->prepare("SELECT full_name, signature_path FROM idcard_signers WHERE id = ?");
@@ -123,7 +126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // บันทึก Log ลบลายเซ็น
             saveLog($conn, 'SETTING_SIGNER', "ลบลายเซ็นของ: " . ($signer['full_name'] ?? 'ไม่ทราบชื่อ') . " (ID: $id)", $id);
             $msg = "ลบข้อมูลสำเร็จ";
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             $msg = "❌ ไม่สามารถลบได้ เนื่องจากถูกใช้งานในประวัติการทำบัตรแล้ว";
         }
     }
@@ -136,7 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             saveLog($conn, 'SETTING_ORG', "เพิ่มหน่วยงานใหม่: $org_name", null, null, ['org_name' => $org_name]);
             $msg = "เพิ่มหน่วยงานสำเร็จ";
         }
-    } elseif ($action === 'edit_org') {
+    }
+    elseif ($action === 'edit_org') {
         $id = $_POST['org_id'];
         $org_name = trim($_POST['org_name']);
 
@@ -144,14 +149,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->prepare("UPDATE idcard_organizations SET org_name = ? WHERE id = ?")->execute([$org_name, $id]);
         saveLog($conn, 'SETTING_ORG', "แก้ไขชื่อหน่วยงาน (ID: $id)", $id, ['org_name' => $old_org], ['org_name' => $org_name]);
         $msg = "แก้ไขหน่วยงานสำเร็จ";
-    } elseif ($action === 'delete_org') {
+    }
+    elseif ($action === 'delete_org') {
         $id = $_POST['org_id'];
         try {
             $old_org = $conn->query("SELECT org_name FROM idcard_organizations WHERE id = $id")->fetchColumn();
             $conn->prepare("DELETE FROM idcard_organizations WHERE id = ?")->execute([$id]);
             saveLog($conn, 'SETTING_ORG', "ลบหน่วยงาน: $old_org (ID: $id)", $id, ['org_name' => $old_org], null);
             $msg = "ลบหน่วยงานสำเร็จ";
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             $msg = "❌ ไม่สามารถลบได้ เนื่องจากมีประวัติคำขอที่ใช้หน่วยงานนี้อยู่";
         }
     }
@@ -165,7 +172,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             saveLog($conn, 'SETTING_POS', "เพิ่มตำแหน่ง: $pos", null, null, ['position_name' => $pos, 'default_org_id' => $org_id]);
             $msg = "เพิ่มตำแหน่งเข้าในตัวช่วยกรอกสำเร็จ";
         }
-    } elseif ($action === 'edit_position') {
+    }
+    elseif ($action === 'edit_position') {
         $id = $_POST['pos_id'];
         $pos = trim($_POST['position_name']);
         $org_id = !empty($_POST['default_org_id']) ? $_POST['default_org_id'] : NULL;
@@ -180,12 +188,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         saveLog($conn, 'SETTING_POS', "แก้ไขข้อมูลตำแหน่ง (ID: $id)", $id, $old_data, ['position_name' => $pos, 'default_org_id' => $org_id]);
         $msg = "แก้ไขตำแหน่งและผูกสังกัดสำเร็จ";
-    } elseif ($action === 'delete_position') {
+    }
+    elseif ($action === 'delete_position') {
         $id = $_POST['pos_id'];
         $old_pos = $conn->query("SELECT position_name FROM idcard_positions WHERE id = $id")->fetchColumn();
         $conn->prepare("DELETE FROM idcard_positions WHERE id = ?")->execute([$id]);
         saveLog($conn, 'SETTING_POS', "ลบตำแหน่ง: $old_pos (ID: $id)", $id, ['position_name' => $old_pos], null);
         $msg = "ลบตำแหน่งออกจากตัวเลือกสำเร็จ";
+    }
+    elseif ($action === 'export_positions_csv') {
+        // ดึงข้อมูลตำแหน่งพร้อมชื่อหน่วยงาน
+        $positions = $conn->query("
+            SELECT p.position_name, o.org_name 
+            FROM idcard_positions p 
+            LEFT JOIN idcard_organizations o ON p.default_org_id = o.id 
+            ORDER BY p.position_name ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        // Header สำหรับดาวน์โหลดไฟล์ CSV
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="positions_export_' . date('Ymd_His') . '.csv"');
+
+        $output = fopen('php://output', 'w');
+        // เพิ่ม BOM เพื่อให้ Excel อ่านภาษาไทยได้ถูกต้อง
+        fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        // เขียน Header ของ CSV
+        fputcsv($output, ['ชื่อตำแหน่ง', 'ผูกสังกัด']);
+
+        foreach ($positions as $p) {
+            fputcsv($output, [$p['position_name'], $p['org_name']]);
+        }
+
+        fclose($output);
+        saveLog($conn, 'SETTING_POS', "ส่งออกไฟล์ตำแหน่ง (CSV)", null, null, null);
+        exit();
+    }
+    elseif ($action === 'import_positions_csv') {
+        if (!empty($_FILES['csv_file']['tmp_name'])) {
+            $ext = strtolower(pathinfo($_FILES['csv_file']['name'], PATHINFO_EXTENSION));
+            if ($ext !== 'csv') {
+                die("<script>alert('⛔ Error: กรุณาอัปโหลดไฟล์นามสกุล .csv เท่านั้น'); window.history.back();</script>");
+            }
+
+            $handle = fopen($_FILES['csv_file']['tmp_name'], "r");
+            if ($handle !== FALSE) {
+                // ข้าม BOM ถ้ามี และอ่าน Header ทิ้ง
+                $line = fgets($handle);
+                // ตรวจสอบ BOM (EF BB BF)
+                if (strncmp($line, "\xEF\xBB\xBF", 3) === 0) {
+                    $line = substr($line, 3);
+                }
+                // ถ้าไม่ใช่ Header ก็เริ่มอ่านข้อมูล (ส่วนใหญ่จะเป็นระบุ header มา)
+                // ตรวจสอบง่ายๆ ว่าเป็นคอลัมน์ "ชื่อตำแหน่ง" หรือไม่ ถ้าใช่ให้ข้ามไปบรรทัดถัดไป
+                // ถ้าไม่มั่นใจ ให้ใช้ fgetcsv ตั้งแต่เริ่ม
+
+                rewind($handle);
+                // ข้าม BOM ใน stream จริง
+                $bom = fread($handle, 3);
+                if ($bom !== "\xEF\xBB\xBF") {
+                    rewind($handle);
+                }
+
+                $header = fgetcsv($handle, 1000, ","); // ข้าม Header
+
+                // ดึงรายชื่อหน่วยงานทั้งหมดเพื่อตรวจสอบตอน Import
+                $orgs_rows = $conn->query("SELECT id, org_name FROM idcard_organizations")->fetchAll(PDO::FETCH_ASSOC);
+                $orgs_map = [];
+                foreach ($orgs_rows as $or) {
+                    $orgs_map[$or['org_name']] = $or['id'];
+                }
+
+                $importedCount = 0;
+                $skippedCount = 0;
+
+                while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                    $pos_name = trim($data[0] ?? '');
+                    $org_name = trim($data[1] ?? '');
+
+                    if (empty($pos_name))
+                        continue;
+
+                    $org_id = null;
+                    if (!empty($org_name)) {
+                        // ค้นหา ID จากชื่อ
+                        if (isset($orgs_map[$org_name])) {
+                            $org_id = $orgs_map[$org_name];
+                        }
+                        else {
+                            // ถ้าไม่เจอชื่อหน่วยงานก็อาจจะไม่ผูก หรือจะสร้างใหม่ (ในกรณีนี้ให้ไม่ผูกตาม Requirement ไม่ได้บอกให้สร้างใหม่)
+                            $org_id = null;
+                        }
+                    }
+
+                    // Check if exist
+                    $check = $conn->prepare("SELECT COUNT(*) FROM idcard_positions WHERE position_name = ?");
+                    $check->execute([$pos_name]);
+                    if ($check->fetchColumn() == 0) {
+                        $stmt = $conn->prepare("INSERT INTO idcard_positions (position_name, default_org_id) VALUES (?, ?)");
+                        $stmt->execute([$pos_name, $org_id]);
+                        $importedCount++;
+                    }
+                    else {
+                        // อาจจะมีการปรับ Default ORG ID ถ้ามีอยู่แล้วหรือไม่
+                        // ตาม Requirement "หากตำแหน่งซ้ำกับที่มีอยู่ให้ถือว่าเป็นตำแหน่งเดียวกัน" แปลว่าข้ามไป หรือแค่อัปเดต
+                        $skippedCount++;
+                    }
+                }
+                fclose($handle);
+                saveLog($conn, 'SETTING_POS', "นำเข้าตำแหน่งจากไฟล์ CSV (สำเร็จ: $importedCount, ข้าม/ซ้ำ: $skippedCount)", null, null, null);
+                $msg = "นำเข้าข้อมูลสำเร็จ $importedCount รายการ (ข้ามข้อมูลซ้ำ $skippedCount รายการ)";
+            }
+            else {
+                $msg = "❌ ไม่สามารถอ่านไฟล์ CSV ได้";
+            }
+        }
     }
 
     // --- 🟢 4. จัดการการแจ้งเตือน (Notifications) ---
@@ -220,7 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     if (isset($msg)) {
-        echo "<script>alert('$msg'); window.location.href='admin_settings.php';</script>";
+        echo "<script>alert('$msg'); window.location.href = 'admin_settings.php';</script>";
         exit();
     }
 }
@@ -236,17 +353,17 @@ $nt_settings = $conn->query("SELECT setting_key, setting_value FROM idcard_setti
 $discord_webhook = $nt_settings['discord_webhook_url'] ?? '';
 $line_channel_token = $nt_settings['line_channel_access_token'] ?? '';
 $line_user_id = $nt_settings['line_user_id'] ?? '';
-$line_msg_count = (int) ($nt_settings['line_msg_count'] ?? 0);
+$line_msg_count = (int)($nt_settings['line_msg_count'] ?? 0);
 $tg_bot_token = $nt_settings['telegram_bot_token'] ?? '';
 $tg_chat_id = $nt_settings['telegram_chat_id'] ?? '';
 
 // ==========================================
 // 🟢 ดึงข้อมูลเลขรันนิ่งปัจจุบันมาโชว์แอดมิน
 // ==========================================
-$current_y_th = (int) (date('Y') + 543);
+$current_y_th = (int)(date('Y') + 543);
 $stmt_max = $conn->prepare("SELECT MAX(card_sequence) FROM idcard_requests WHERE card_year = ?");
 $stmt_max->execute([$current_y_th]);
-$current_max_seq = (int) $stmt_max->fetchColumn();
+$current_max_seq = (int)$stmt_max->fetchColumn();
 // ==========================================
 ?>
 <!DOCTYPE html>
@@ -280,7 +397,7 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
 
                 <form action="" method="POST" enctype="multipart/form-data"
                     class="flex flex-col gap-2 mb-6 bg-blue-50 p-4 rounded border">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                     <input type="hidden" name="action" value="add_signer">
                     <input type="hidden" name="signer_type" value="ISSUER">
                     <div class="flex gap-2">
@@ -311,40 +428,47 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                         </thead>
                         <tbody>
                             <?php foreach ($issuers as $i): ?>
-                                <tr>
-                                    <td class="p-2 border text-center">
-                                        <?php if ($i['is_active']): ?>
-                                            <span
-                                                class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">ใช้งานอยู่</span>
-                                        <?php else: ?>
-                                            <form action="" method="POST"><input type="hidden" name="csrf_token"
-                                                    value="<?= $_SESSION['csrf_token'] ?>"><input type="hidden" name="action"
-                                                    value="set_active_signer"><input type="hidden" name="signer_type"
-                                                    value="ISSUER"><input type="hidden" name="signer_id"
-                                                    value="<?= $i['id'] ?>"><button type="submit"
-                                                    class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-xs text-gray-700 font-bold">เลือกใช้</button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="p-2 border leading-tight">
-                                        <strong><?= $i['rank_name'] . ' ' . $i['full_name'] ?></strong><br>
-                                        <span class="text-xs text-gray-500"><?= $i['position'] ?></span>
-                                    </td>
-                                    <td class="p-2 border"><img src="<?= getBase64Img($i['signature_path']) ?>"
-                                            class="h-8 max-w-[100px] object-contain"></td>
-                                    <td class="p-2 border text-center">
-                                        <form action="" method="POST"
-                                            onsubmit="return confirm('ยืนยันการลบลายเซ็นนี้? (ถ้าถูกใช้ไปแล้วระบบจะปฏิเสธการลบ)');">
-                                            <input type="hidden" name="csrf_token"
-                                                value="<?= $_SESSION['csrf_token'] ?>"><input type="hidden" name="action"
-                                                value="delete_signer"><input type="hidden" name="signer_id"
-                                                value="<?= $i['id'] ?>"><button type="submit"
-                                                class="text-red-500 hover:text-red-700"><i
-                                                    class="fas fa-trash"></i></button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
+                            <tr>
+                                <td class="p-2 border text-center">
+                                    <?php if ($i['is_active']): ?>
+                                    <span
+                                        class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">ใช้งานอยู่</span>
+                                    <?php
+    else: ?>
+                                    <form action="" method="POST"><input type="hidden" name="csrf_token"
+                                            value="<?= $_SESSION['csrf_token']?>"><input type="hidden" name="action"
+                                            value="set_active_signer"><input type="hidden" name="signer_type"
+                                            value="ISSUER"><input type="hidden" name="signer_id"
+                                            value="<?= $i['id']?>"><button type="submit"
+                                            class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-xs text-gray-700 font-bold">เลือกใช้</button>
+                                    </form>
+                                    <?php
+    endif; ?>
+                                </td>
+                                <td class="p-2 border leading-tight">
+                                    <strong>
+                                        <?= $i['rank_name'] . ' ' . $i['full_name']?>
+                                    </strong><br>
+                                    <span class="text-xs text-gray-500">
+                                        <?= $i['position']?>
+                                    </span>
+                                </td>
+                                <td class="p-2 border"><img src="<?= getBase64Img($i['signature_path'])?>"
+                                        class="h-8 max-w-[100px] object-contain"></td>
+                                <td class="p-2 border text-center">
+                                    <form action="" method="POST"
+                                        onsubmit="return confirm('ยืนยันการลบลายเซ็นนี้? (ถ้าถูกใช้ไปแล้วระบบจะปฏิเสธการลบ)');">
+                                        <input type="hidden" name="csrf_token"
+                                            value="<?= $_SESSION['csrf_token']?>"><input type="hidden" name="action"
+                                            value="delete_signer"><input type="hidden" name="signer_id"
+                                            value="<?= $i['id']?>"><button type="submit"
+                                            class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php
+endforeach; ?>
                         </tbody>
                     </table>
                 </div>
@@ -356,7 +480,7 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
 
                 <form action="" method="POST" enctype="multipart/form-data"
                     class="flex flex-col gap-2 mb-6 bg-yellow-50 p-4 rounded border">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                     <input type="hidden" name="action" value="add_signer">
                     <input type="hidden" name="signer_type" value="INSPECTOR">
                     <div><label class="text-sm font-bold">ชื่ออ้างอิง (เช่น ชุดที่ 1, นาย เอ)</label><input type="text"
@@ -381,33 +505,38 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                         </thead>
                         <tbody>
                             <?php foreach ($inspectors as $i): ?>
-                                <tr>
-                                    <td class="p-2 border text-center">
-                                        <?php if ($i['is_active']): ?><span
-                                                class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">ใช้งานอยู่</span>
-                                        <?php else: ?>
-                                            <form action="" method="POST"><input type="hidden" name="csrf_token"
-                                                    value="<?= $_SESSION['csrf_token'] ?>"><input type="hidden" name="action"
-                                                    value="set_active_signer"><input type="hidden" name="signer_type"
-                                                    value="INSPECTOR"><input type="hidden" name="signer_id"
-                                                    value="<?= $i['id'] ?>"><button type="submit"
-                                                    class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-xs font-bold text-gray-700">เลือกใช้</button>
-                                            </form><?php endif; ?>
-                                    </td>
-                                    <td class="p-2 border"><?= $i['full_name'] ?></td>
-                                    <td class="p-2 border"><img src="<?= getBase64Img($i['signature_path']) ?>"
-                                            class="h-8 max-w-[100px] object-contain"></td>
-                                    <td class="p-2 border text-center">
-                                        <form action="" method="POST" onsubmit="return confirm('ยืนยันการลบ?');"><input
-                                                type="hidden" name="csrf_token"
-                                                value="<?= $_SESSION['csrf_token'] ?>"><input type="hidden" name="action"
-                                                value="delete_signer"><input type="hidden" name="signer_id"
-                                                value="<?= $i['id'] ?>"><button type="submit"
-                                                class="text-red-500 hover:text-red-700"><i
-                                                    class="fas fa-trash"></i></button></form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
+                            <tr>
+                                <td class="p-2 border text-center">
+                                    <?php if ($i['is_active']): ?><span
+                                        class="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">ใช้งานอยู่</span>
+                                    <?php
+    else: ?>
+                                    <form action="" method="POST"><input type="hidden" name="csrf_token"
+                                            value="<?= $_SESSION['csrf_token']?>"><input type="hidden" name="action"
+                                            value="set_active_signer"><input type="hidden" name="signer_type"
+                                            value="INSPECTOR"><input type="hidden" name="signer_id"
+                                            value="<?= $i['id']?>"><button type="submit"
+                                            class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-xs font-bold text-gray-700">เลือกใช้</button>
+                                    </form>
+                                    <?php
+    endif; ?>
+                                </td>
+                                <td class="p-2 border">
+                                    <?= $i['full_name']?>
+                                </td>
+                                <td class="p-2 border"><img src="<?= getBase64Img($i['signature_path'])?>"
+                                        class="h-8 max-w-[100px] object-contain"></td>
+                                <td class="p-2 border text-center">
+                                    <form action="" method="POST" onsubmit="return confirm('ยืนยันการลบ?');"><input
+                                            type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>"><input
+                                            type="hidden" name="action" value="delete_signer"><input type="hidden"
+                                            name="signer_id" value="<?= $i['id']?>"><button type="submit"
+                                            class="text-red-500 hover:text-red-700"><i
+                                                class="fas fa-trash"></i></button></form>
+                                </td>
+                            </tr>
+                            <?php
+endforeach; ?>
                         </tbody>
                     </table>
                 </div>
@@ -418,7 +547,7 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                 </h2>
 
                 <form action="" method="POST" class="flex gap-2 mb-6">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                     <input type="hidden" name="action" value="add_org">
                     <input type="text" name="org_name" placeholder="ระบุชื่อหน่วยงานใหม่..."
                         class="flex-1 border p-2 rounded" required>
@@ -437,25 +566,30 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                         </thead>
                         <tbody>
                             <?php foreach ($orgs as $o): ?>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-2"><?= $o['id'] ?></td>
-                                    <td class="p-2 font-semibold text-gray-700"><?= htmlspecialchars($o['org_name']) ?></td>
-                                    <td class="p-2 text-center flex justify-center gap-1">
-                                        <button type="button"
-                                            onclick="editOrg(<?= $o['id'] ?>, '<?= htmlspecialchars(addslashes($o['org_name'])) ?>')"
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">แก้ไข</button>
-                                        <form action="" method="POST"
-                                            onsubmit="return confirm('คำเตือน: หากลบถาวร ข้อมูลบัตรเก่าที่ผูกกับหน่วยงานนี้อาจสูญหาย ยืนยันการลบ?');">
-                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                            <input type="hidden" name="action" value="delete_org"><input type="hidden"
-                                                name="org_id" value="<?= $o['id'] ?>">
-                                            <button type="submit"
-                                                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
-                                                title="ลบถาวร"><i class="fas fa-trash"></i></button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="p-2">
+                                    <?= $o['id']?>
+                                </td>
+                                <td class="p-2 font-semibold text-gray-700">
+                                    <?= htmlspecialchars($o['org_name'])?>
+                                </td>
+                                <td class="p-2 text-center flex justify-center gap-1">
+                                    <button type="button"
+                                        onclick="editOrg(<?= $o['id']?>, '<?= htmlspecialchars(addslashes($o['org_name']))?>')"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">แก้ไข</button>
+                                    <form action="" method="POST"
+                                        onsubmit="return confirm('คำเตือน: หากลบถาวร ข้อมูลบัตรเก่าที่ผูกกับหน่วยงานนี้อาจสูญหาย ยืนยันการลบ?');">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                                        <input type="hidden" name="action" value="delete_org"><input type="hidden"
+                                            name="org_id" value="<?= $o['id']?>">
+                                        <button type="submit"
+                                            class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                                            title="ลบถาวร"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php
+endforeach; ?>
                         </tbody>
                     </table>
                 </div>
@@ -467,23 +601,51 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                 <p class="text-sm text-gray-500 mb-4">ข้อมูลส่วนนี้จะไปโผล่เป็นตัวเลือกให้หน้าผู้ใช้งาน และหน้า Admin
                 </p>
 
-                <form action="" method="POST" class="flex gap-2 mb-6">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                <form action="" method="POST" class="flex gap-2 mb-3">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                     <input type="hidden" name="action" value="add_position">
                     <input type="text" name="position_name" placeholder="เพิ่มตำแหน่งใหม่..."
                         class="flex-1 border p-2 rounded" required>
-
                     <select name="default_org_id" class="border p-2 rounded w-1/3">
-                        <option value="">-- ไม่ผูกสังกัด (เว้นว่าง) --</option>
+                        <option value="">ไม่ผูกสังกัด</option>
                         <?php foreach ($orgs as $o): ?>
-                            <option value="<?= $o['id'] ?>"><?= $o['org_name'] ?></option>
-                        <?php endforeach; ?>
+                        <option value="<?= $o['id']?>">
+                            <?= htmlspecialchars($o['org_name'])?>
+                        </option>
+                        <?php
+endforeach; ?>
                     </select>
-
                     <button type="submit"
                         class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-bold">+
                         เพิ่ม</button>
                 </form>
+
+                <!-- ปุ่ม Export / Import CSV -->
+                <div class="flex items-center gap-2 mb-4 p-2 bg-gray-50 border rounded">
+                    <span class="text-xs text-gray-500 font-semibold shrink-0">CSV:</span>
+
+                    <!-- Export -->
+                    <form action="" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                        <input type="hidden" name="action" value="export_positions_csv">
+                        <button type="submit"
+                            class="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold">
+                            <i class="fas fa-file-export"></i> Export CSV
+                        </button>
+                    </form>
+
+                    <!-- Import -->
+                    <form action="" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                        <input type="hidden" name="action" value="import_positions_csv">
+                        <input type="file" name="csv_file" accept=".csv"
+                            class="text-xs border rounded px-1 py-1 bg-white" required>
+                        <button type="submit"
+                            class="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-bold">
+                            <i class="fas fa-file-import"></i> Upload CSV
+                        </button>
+                    </form>
+                </div>
 
                 <div class="overflow-y-auto max-h-96 border rounded">
                     <table class="w-full text-sm text-left">
@@ -495,32 +657,35 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                         </thead>
                         <tbody>
                             <?php foreach ($positions_list as $p): ?>
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td class="p-2 font-semibold text-gray-700">
-                                        <?= htmlspecialchars($p['position_name']) ?>
-                                        <?php if (!empty($p['org_name'])): ?>
-                                            <span
-                                                class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2 border border-blue-200">
-                                                <i class="fas fa-link"></i> <?= htmlspecialchars($p['org_name']) ?>
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="p-2 text-center flex justify-center gap-1">
-                                        <button type="button"
-                                            onclick="editPosition(<?= $p['id'] ?>, '<?= htmlspecialchars(addslashes($p['position_name'])) ?>', '<?= $p['default_org_id'] ?? '' ?>')"
-                                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">แก้ไข</button>
-                                        <form action="" method="POST"
-                                            onsubmit="return confirm('ยืนยันการลบตำแหน่งนี้ออกจากระบบตัวเลือก?');">
-                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                            <input type="hidden" name="action" value="delete_position"><input type="hidden"
-                                                name="pos_id" value="<?= $p['id'] ?>">
-                                            <button type="submit"
-                                                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"><i
-                                                    class="fas fa-trash"></i></button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="p-2 font-semibold text-gray-700">
+                                    <?= htmlspecialchars($p['position_name'])?>
+                                    <?php if (!empty($p['org_name'])): ?>
+                                    <span
+                                        class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded ml-2 border border-blue-200">
+                                        <i class="fas fa-link"></i>
+                                        <?= htmlspecialchars($p['org_name'])?>
+                                    </span>
+                                    <?php
+    endif; ?>
+                                </td>
+                                <td class="p-2 text-center flex justify-center gap-1">
+                                    <button type="button"
+                                        onclick="editPosition(<?= $p['id']?>, '<?= htmlspecialchars(addslashes($p['position_name']))?>', '<?= $p['default_org_id'] ?? ''?>')"
+                                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">แก้ไข</button>
+                                    <form action="" method="POST"
+                                        onsubmit="return confirm('ยืนยันการลบตำแหน่งนี้ออกจากระบบตัวเลือก?');">
+                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                                        <input type="hidden" name="action" value="delete_position"><input type="hidden"
+                                            name="pos_id" value="<?= $p['id']?>">
+                                        <button type="submit"
+                                            class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"><i
+                                                class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php
+endforeach; ?>
                         </tbody>
                     </table>
                 </div>
@@ -539,26 +704,30 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                 <div class="bg-yellow-50 p-4 rounded border border-yellow-200 mb-4 flex items-center gap-3">
                     <i class="fas fa-info-circle text-yellow-600 text-2xl"></i>
                     <div>
-                        <p class="text-sm font-bold text-yellow-800">ข้อมูลปัจจุบัน (ปี พ.ศ. <?= $current_y_th ?>)</p>
+                        <p class="text-sm font-bold text-yellow-800">ข้อมูลปัจจุบัน (ปี พ.ศ.
+                            <?= $current_y_th?>)
+                        </p>
                         <p class="text-sm text-yellow-700">ลำดับเลขบัตรสูงสุดที่ออกไปแล้วในระบบ คือ: <span
-                                class="font-bold text-lg"><?= $current_max_seq ?></span></p>
+                                class="font-bold text-lg">
+                                <?= $current_max_seq?>
+                            </span></p>
                     </div>
                 </div>
 
                 <form action="" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                     <input type="hidden" name="action" value="set_last_sequence">
 
                     <div>
                         <label class="block text-sm font-bold mb-1">ปี พ.ศ. (ปีที่ต้องการตั้งค่า)</label>
-                        <input type="number" name="card_year" value="<?= $current_y_th ?>"
+                        <input type="number" name="card_year" value="<?= $current_y_th?>"
                             class="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-yellow-400 outline-none"
                             required>
                     </div>
                     <div>
                         <label class="block text-sm font-bold mb-1">เลขลำดับล่าสุด (ที่ออกไปแล้ว)</label>
-                        <input type="number" name="last_sequence" min="<?= $current_max_seq + 1 ?>"
-                            placeholder="ต้องมากกว่า <?= $current_max_seq ?>"
+                        <input type="number" name="last_sequence" min="<?= $current_max_seq + 1?>"
+                            placeholder="ต้องมากกว่า <?= $current_max_seq?>"
                             class="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-yellow-400 outline-none"
                             required>
                     </div>
@@ -574,124 +743,124 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
 
             <!-- 🟢 5. ตั้งค่าการแจ้งเตือน (เฉพาะ Super_Admin) -->
             <?php if ($_SESSION['role'] === 'Super_Admin'): ?>
-                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-500 md:col-span-2">
-                    <h2 class="text-xl font-bold mb-4 text-red-800"><i class="fas fa-bell"></i> 5. ตั้งค่าการแจ้งเตือน
-                        (Discord / LINE / Telegram)</h2>
-                    <p class="text-sm text-gray-500 mb-6">ระบบจะส่งข้อมูลแจ้งเตือนทันทีเมื่อมีผู้ยื่นคำขอใหม่เข้ามาในระบบ
-                        (ส่วนนี้เห็นเฉพาะ Super Admin)</p>
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-500 md:col-span-2">
+                <h2 class="text-xl font-bold mb-4 text-red-800"><i class="fas fa-bell"></i> 5. ตั้งค่าการแจ้งเตือน
+                    (Discord / LINE / Telegram)</h2>
+                <p class="text-sm text-gray-500 mb-6">ระบบจะส่งข้อมูลแจ้งเตือนทันทีเมื่อมีผู้ยื่นคำขอใหม่เข้ามาในระบบ
+                    (ส่วนนี้เห็นเฉพาะ Super Admin)</p>
 
-                    <form action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                        <input type="hidden" name="action" value="update_notifications">
+                <form action="" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                    <input type="hidden" name="action" value="update_notifications">
 
-                        <!-- Discord -->
-                        <div class="space-y-3 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i class="fab fa-discord text-2xl text-indigo-600"></i>
-                                <h3 class="font-bold text-gray-800">Discord Notification</h3>
+                    <!-- Discord -->
+                    <div class="space-y-3 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fab fa-discord text-2xl text-indigo-600"></i>
+                            <h3 class="font-bold text-gray-800">Discord Notification</h3>
+                        </div>
+                        <div class="relative">
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Webhook URL</label>
+                            <input type="password" id="discord_webhook" name="discord_webhook_url"
+                                value="<?= htmlspecialchars($discord_webhook)?>"
+                                placeholder="https://discord.com/api/webhooks/..."
+                                class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+                            <button type="button" onclick="toggleVisibility('discord_webhook')"
+                                class="absolute right-3 top-8 text-gray-400 hover:text-indigo-600">
+                                <i class="fas fa-eye" id="eye-discord_webhook"></i>
+                            </button>
+                            <p class="text-[10px] text-gray-500 mt-1 italic">นำ Webhook URL จาก Channel Settings >
+                                Integrations มาใส่</p>
+                        </div>
+                    </div>
+
+                    <!-- LINE Messaging API -->
+                    <div class="space-y-3 bg-green-50 p-4 rounded-lg border border-green-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fab fa-line text-2xl text-green-600"></i>
+                                <h3 class="font-bold text-gray-800">LINE Messaging API</h3>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] font-bold text-gray-500 block uppercase">โควต้าเดือนนี้</span>
+                                <span
+                                    class="<?= $line_msg_count >= 300 ? 'text-red-600' : 'text-green-700'?> font-bold text-sm">
+                                    <?= $line_msg_count?> / 300
+                                </span>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="relative">
+                                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Channel Access
+                                    Token</label>
+                                <input type="password" id="line_token" name="line_channel_access_token"
+                                    value="<?= htmlspecialchars($line_channel_token)?>"
+                                    placeholder="ระบุ Long-lived Access Token..."
+                                    class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-green-400 outline-none">
+                                <button type="button" onclick="toggleVisibility('line_token')"
+                                    class="absolute right-3 top-8 text-gray-400 hover:text-green-600">
+                                    <i class="fas fa-eye" id="eye-line_token"></i>
+                                </button>
                             </div>
                             <div class="relative">
-                                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Webhook URL</label>
-                                <input type="password" id="discord_webhook" name="discord_webhook_url"
-                                    value="<?= htmlspecialchars($discord_webhook) ?>"
-                                    placeholder="https://discord.com/api/webhooks/..."
-                                    class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
-                                <button type="button" onclick="toggleVisibility('discord_webhook')"
-                                    class="absolute right-3 top-8 text-gray-400 hover:text-indigo-600">
-                                    <i class="fas fa-eye" id="eye-discord_webhook"></i>
+                                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">User / Group
+                                    ID</label>
+                                <input type="password" id="line_user" name="line_user_id"
+                                    value="<?= htmlspecialchars($line_user_id)?>" placeholder="e.g. U123456789abcdef..."
+                                    class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-green-400 outline-none">
+                                <button type="button" onclick="toggleVisibility('line_user')"
+                                    class="absolute right-3 top-8 text-gray-400 hover:text-green-600">
+                                    <i class="fas fa-eye" id="eye-line_user"></i>
                                 </button>
-                                <p class="text-[10px] text-gray-500 mt-1 italic">นำ Webhook URL จาก Channel Settings >
-                                    Integrations มาใส่</p>
                             </div>
                         </div>
+                        <p class="text-[10px] text-gray-500 mt-1 italic">ตั้งค่าได้ที่ <a
+                                href="https://developers.line.biz/" target="_blank"
+                                class="text-green-600 underline">LINE Developers Console</a></p>
+                    </div>
 
-                        <!-- LINE Messaging API -->
-                        <div class="space-y-3 bg-green-50 p-4 rounded-lg border border-green-100">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-2">
-                                    <i class="fab fa-line text-2xl text-green-600"></i>
-                                    <h3 class="font-bold text-gray-800">LINE Messaging API</h3>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-[10px] font-bold text-gray-500 block uppercase">โควต้าเดือนนี้</span>
-                                    <span
-                                        class="<?= $line_msg_count >= 300 ? 'text-red-600' : 'text-green-700' ?> font-bold text-sm">
-                                        <?= $line_msg_count ?> / 300
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="relative">
-                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Channel Access
-                                        Token</label>
-                                    <input type="password" id="line_token" name="line_channel_access_token"
-                                        value="<?= htmlspecialchars($line_channel_token) ?>"
-                                        placeholder="ระบุ Long-lived Access Token..."
-                                        class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-green-400 outline-none">
-                                    <button type="button" onclick="toggleVisibility('line_token')"
-                                        class="absolute right-3 top-8 text-gray-400 hover:text-green-600">
-                                        <i class="fas fa-eye" id="eye-line_token"></i>
-                                    </button>
-                                </div>
-                                <div class="relative">
-                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">User / Group
-                                        ID</label>
-                                    <input type="password" id="line_user" name="line_user_id"
-                                        value="<?= htmlspecialchars($line_user_id) ?>"
-                                        placeholder="e.g. U123456789abcdef..."
-                                        class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-green-400 outline-none">
-                                    <button type="button" onclick="toggleVisibility('line_user')"
-                                        class="absolute right-3 top-8 text-gray-400 hover:text-green-600">
-                                        <i class="fas fa-eye" id="eye-line_user"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <p class="text-[10px] text-gray-500 mt-1 italic">ตั้งค่าได้ที่ <a
-                                    href="https://developers.line.biz/" target="_blank"
-                                    class="text-green-600 underline">LINE Developers Console</a></p>
+                    <!-- Telegram -->
+                    <div class="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-100 md:col-span-2">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fab fa-telegram text-2xl text-blue-500"></i>
+                            <h3 class="font-bold text-gray-800">Telegram Bot Notification</h3>
                         </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="relative">
+                                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Bot Token</label>
+                                <input type="password" id="tg_token" name="telegram_bot_token"
+                                    value="<?= htmlspecialchars($tg_bot_token)?>" placeholder="e.g. 123456:ABC-DEF..."
+                                    class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+                                <button type="button" onclick="toggleVisibility('tg_token')"
+                                    class="absolute right-3 top-8 text-gray-400 hover:text-blue-600">
+                                    <i class="fas fa-eye" id="eye-tg_token"></i>
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Chat ID</label>
+                                <input type="password" id="tg_chat" name="telegram_chat_id"
+                                    value="<?= htmlspecialchars($tg_chat_id)?>" placeholder="e.g. -10012345678"
+                                    class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+                                <button type="button" onclick="toggleVisibility('tg_chat')"
+                                    class="absolute right-3 top-8 text-gray-400 hover:text-blue-600">
+                                    <i class="fas fa-eye" id="eye-tg_chat"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-1 italic">สร้าง Bot จาก @BotFather และหา Chat ID ได้จาก
+                            @userinfobot หรือ Bot API</p>
+                    </div>
 
-                        <!-- Telegram -->
-                        <div class="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-100 md:col-span-2">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i class="fab fa-telegram text-2xl text-blue-500"></i>
-                                <h3 class="font-bold text-gray-800">Telegram Bot Notification</h3>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="relative">
-                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Bot Token</label>
-                                    <input type="password" id="tg_token" name="telegram_bot_token"
-                                        value="<?= htmlspecialchars($tg_bot_token) ?>" placeholder="e.g. 123456:ABC-DEF..."
-                                        class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none">
-                                    <button type="button" onclick="toggleVisibility('tg_token')"
-                                        class="absolute right-3 top-8 text-gray-400 hover:text-blue-600">
-                                        <i class="fas fa-eye" id="eye-tg_token"></i>
-                                    </button>
-                                </div>
-                                <div class="relative">
-                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Chat ID</label>
-                                    <input type="password" id="tg_chat" name="telegram_chat_id"
-                                        value="<?= htmlspecialchars($tg_chat_id) ?>" placeholder="e.g. -10012345678"
-                                        class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none">
-                                    <button type="button" onclick="toggleVisibility('tg_chat')"
-                                        class="absolute right-3 top-8 text-gray-400 hover:text-blue-600">
-                                        <i class="fas fa-eye" id="eye-tg_chat"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <p class="text-[10px] text-gray-500 mt-1 italic">สร้าง Bot จาก @BotFather และหา Chat ID ได้จาก
-                                @userinfobot หรือ Bot API</p>
-                        </div>
-
-                        <div class="md:col-span-2 flex justify-center mt-4">
-                            <button type="submit"
-                                class="bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">
-                                <i class="fas fa-save mr-2"></i> บันทึกการตั้งค่าการแจ้งเตือนทั้งหมด
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            <?php endif; ?>
+                    <div class="md:col-span-2 flex justify-center mt-4">
+                        <button type="submit"
+                            class="bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">
+                            <i class="fas fa-save mr-2"></i> บันทึกการตั้งค่าการแจ้งเตือนทั้งหมด
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <?php
+endif; ?>
 
         </div>
     </div>
@@ -719,7 +888,7 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
             <h3 class="text-xl font-bold mb-4 text-purple-800"><i class="fas fa-edit"></i> แก้ไขข้อมูลตำแหน่ง</h3>
 
             <form action="" method="POST">
-                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                 <input type="hidden" name="action" value="edit_position">
                 <input type="hidden" name="pos_id" id="modal_pos_id">
 
@@ -735,8 +904,11 @@ $current_max_seq = (int) $stmt_max->fetchColumn();
                         class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-gray-50">
                         <option value="">-- ไม่ผูกสังกัด (เว้นว่าง) --</option>
                         <?php foreach ($orgs as $o): ?>
-                            <option value="<?= $o['id'] ?>"><?= $o['org_name'] ?></option>
-                        <?php endforeach; ?>
+                        <option value="<?= $o['id']?>">
+                            <?= $o['org_name']?>
+                        </option>
+                        <?php
+endforeach; ?>
                     </select>
                 </div>
 

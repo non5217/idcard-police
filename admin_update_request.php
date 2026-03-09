@@ -117,7 +117,8 @@ if (!file_exists($upload_dir))
     mkdir($upload_dir, 0777, true);
 $upload_dir = realpath($upload_dir) . '/';
 
-$id_card_number = $_POST['id_card_number'] ?? 'adminedit';
+$raw_id = $_POST['id_card_number'] ?? '';
+$id_card_number = !empty($raw_id) ? preg_replace('/[^0-9]/', '', $raw_id) : 'adminedit';
 function generateCustomName($id_card, $name, $seq_num, $ext)
 {
     $safe_name = preg_replace('/[^A-Za-z0-9ก-๙]/u', '_', $name);

@@ -31,7 +31,8 @@ if (empty($age) || !is_numeric($age)) {
 $nationality = trim($_POST['nationality']);
 $blood_type = $_POST['blood_type'];
 // 🛡️ ป้องกัน IDOR: ดึงเลข ปชช. จาก Session เท่านั้น ห้ามเชื่อ $_POST!
-$id_card_number = $_SESSION['id_card_public'] ?? ($_SESSION['id_card'] ?? '');
+$raw_id = $_SESSION['id_card_public'] ?? ($_SESSION['id_card'] ?? '');
+$id_card_number = preg_replace('/[^0-9]/', '', $raw_id);
 if (empty($id_card_number)) {
     die("Error: ไม่พบสิทธิ์ในการทำรายการ (Invalid Session)");
 }

@@ -145,7 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = $_POST['org_id'];
         $org_name = trim($_POST['org_name']);
 
-        $old_org = $conn->query("SELECT org_name FROM idcard_organizations WHERE id = $id")->fetchColumn();
+        $stmt_old = $conn->prepare("SELECT org_name FROM idcard_organizations WHERE id = ?");
+        $stmt_old->execute([$id]);
+        $old_org = $stmt_old->fetchColumn();
         $conn->prepare("UPDATE idcard_organizations SET org_name = ? WHERE id = ?")->execute([$org_name, $id]);
         saveLog($conn, 'SETTING_ORG', "แก้ไขชื่อหน่วยงาน (ID: $id)", $id, ['org_name' => $old_org], ['org_name' => $org_name]);
         $msg = "แก้ไขหน่วยงานสำเร็จ";
@@ -153,7 +155,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($action === 'delete_org') {
         $id = $_POST['org_id'];
         try {
-            $old_org = $conn->query("SELECT org_name FROM idcard_organizations WHERE id = $id")->fetchColumn();
+            $stmt_old = $conn->prepare("SELECT org_name FROM idcard_organizations WHERE id = ?");
+            $stmt_old->execute([$id]);
+            $old_org = $stmt_old->fetchColumn();
             $conn->prepare("DELETE FROM idcard_organizations WHERE id = ?")->execute([$id]);
             saveLog($conn, 'SETTING_ORG', "ลบหน่วยงาน: $old_org (ID: $id)", $id, ['org_name' => $old_org], null);
             $msg = "ลบหน่วยงานสำเร็จ";
@@ -191,7 +195,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     elseif ($action === 'delete_position') {
         $id = $_POST['pos_id'];
-        $old_pos = $conn->query("SELECT position_name FROM idcard_positions WHERE id = $id")->fetchColumn();
+        $stmt_old = $conn->prepare("SELECT position_name FROM idcard_positions WHERE id = ?");
+        $stmt_old->execute([$id]);
+        $old_pos = $stmt_old->fetchColumn();
         $conn->prepare("DELETE FROM idcard_positions WHERE id = ?")->execute([$id]);
         saveLog($conn, 'SETTING_POS', "ลบตำแหน่ง: $old_pos (ID: $id)", $id, ['position_name' => $old_pos], null);
         $msg = "ลบตำแหน่งออกจากตัวเลือกสำเร็จ";

@@ -307,11 +307,11 @@ endif; ?>
                         <select name="filter_user"
                             class="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
                             <option value="">-- ทั้งหมด --</option>
-                            <option value="ADMIN" <?=$filter_user==='ADMIN' ? 'selected' : ''?>>👨‍✈️ เจ้าหน้าที่
+                            <option value="ADMIN" <?=$filter_user==='ADMIN' ? 'selected' : '' ?>>👨‍✈️ เจ้าหน้าที่
                                 (Admin)</option>
-                            <option value="PUBLIC" <?=$filter_user==='PUBLIC' ? 'selected' : ''?>>🧑 ประชาชน (Public)
+                            <option value="PUBLIC" <?=$filter_user==='PUBLIC' ? 'selected' : '' ?>>🧑 ประชาชน (Public)
                             </option>
-                            <option value="GUEST" <?=$filter_user==='GUEST' ? 'selected' : ''?>>👤 ผู้เยี่ยมชม (Guest)
+                            <option value="GUEST" <?=$filter_user==='GUEST' ? 'selected' : '' ?>>👤 ผู้เยี่ยมชม (Guest)
                             </option>
                         </select>
                     </div>
@@ -320,16 +320,16 @@ endif; ?>
                         <select name="filter_action"
                             class="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50">
                             <option value="">-- ทั้งหมด --</option>
-                            <option value="VIEW" <?=$filter_action==='VIEW' ? 'selected' : ''?>>👁️ เปิดดูข้อมูล
+                            <option value="VIEW" <?=$filter_action==='VIEW' ? 'selected' : '' ?>>👁️ เปิดดูข้อมูล
                             </option>
-                            <option value="CREATE" <?=$filter_action==='CREATE' ? 'selected' : ''?>>➕ สร้างใหม่
+                            <option value="CREATE" <?=$filter_action==='CREATE' ? 'selected' : '' ?>>➕ สร้างใหม่
                             </option>
-                            <option value="UPDATE" <?=$filter_action==='UPDATE' ? 'selected' : ''?>>✏️ แก้ไข/อัปเดต
+                            <option value="UPDATE" <?=$filter_action==='UPDATE' ? 'selected' : '' ?>>✏️ แก้ไข/อัปเดต
                             </option>
-                            <option value="STATUS" <?=$filter_action==='STATUS' ? 'selected' : ''?>>🔄 เปลี่ยนสถานะ
+                            <option value="STATUS" <?=$filter_action==='STATUS' ? 'selected' : '' ?>>🔄 เปลี่ยนสถานะ
                             </option>
-                            <option value="DELETE" <?=$filter_action==='DELETE' ? 'selected' : ''?>>❌ ลบข้อมูล</option>
-                            <option value="SETTING" <?=$filter_action==='SETTING' ? 'selected' : ''?>>⚙️ ตั้งค่าระบบ
+                            <option value="DELETE" <?=$filter_action==='DELETE' ? 'selected' : '' ?>>❌ ลบข้อมูล</option>
+                            <option value="SETTING" <?=$filter_action==='SETTING' ? 'selected' : '' ?>>⚙️ ตั้งค่าระบบ
                             </option>
                         </select>
                     </div>
@@ -542,10 +542,10 @@ endif; ?>
     </div>
 
     <script>
-        const mapOrgs = <?= json_encode($map_orgs ?? [], JSON_UNESCAPED_UNICODE)?>;
-        const mapPos = <?= json_encode($map_pos ?? [], JSON_UNESCAPED_UNICODE)?>;
-        const mapRanks = <?= json_encode($map_ranks ?? [], JSON_UNESCAPED_UNICODE)?>;
-        const mapTypes = <?= json_encode($map_types ?? [], JSON_UNESCAPED_UNICODE)?>;
+        const mapOrgs = <?= json_encode($map_orgs ?? [], JSON_UNESCAPED_UNICODE) ?>;
+        const mapPos = <?= json_encode($map_pos ?? [], JSON_UNESCAPED_UNICODE) ?>;
+        const mapRanks = <?= json_encode($map_ranks ?? [], JSON_UNESCAPED_UNICODE) ?>;
+        const mapTypes = <?= json_encode($map_types ?? [], JSON_UNESCAPED_UNICODE) ?>;
 
         const fieldTranslations = {
             'org_id': 'หน่วย/สังกัด (Organization)',
@@ -606,8 +606,25 @@ endif; ?>
 
             let valStr = typeof valObj === 'object' ? JSON.stringify(valObj, null, 2) : String(valObj);
 
-            // Format Address or JSON fields
-            if (rawKey.includes('json') || rawKey === 'address' || typeof valObj === 'object') {
+            // Format Address fields as readable Thai address
+            if (rawKey === 'address_json' || rawKey === 'contact_address_json') {
+                try {
+                    let addr = typeof valObj === 'object' ? valObj : JSON.parse(valStr);
+                    if (typeof addr === 'object' && addr !== null) {
+                        let line1 = `บ้านเลขที่ ${escapeHTML(addr.house_no || '-')} หมู่ ${escapeHTML(addr.moo || '-')} ถนน ${escapeHTML(addr.road || '-')}`;
+                        let line2 = `ตำบล${escapeHTML(addr.tambon || '-')} อำเภอ${escapeHTML(addr.amphoe || '-')}`;
+                        let line3 = `จังหวัด${escapeHTML(addr.province || '-')} รหัสไปรษณีย์ ${escapeHTML(addr.zipcode || '-')}`;
+                        return `<div class="text-sm leading-relaxed bg-blue-50 border border-blue-100 rounded-lg p-3 text-gray-700 space-y-0.5">
+                                    <div><i class="fas fa-home text-blue-400 mr-1.5 text-xs"></i>${line1}</div>
+                                    <div><i class="fas fa-map-marker-alt text-blue-400 mr-1.5 text-xs"></i>${line2}</div>
+                                    <div><i class="fas fa-map text-blue-400 mr-1.5 text-xs"></i>${line3}</div>
+                                </div>`;
+                    }
+                } catch (e) { /* fallback */ }
+            }
+
+            // Format other JSON fields as code block
+            if (rawKey.includes('json') || typeof valObj === 'object') {
                 try {
                     let parsed = typeof valObj === 'object' ? valObj : (valStr.trim().startsWith('{') || valStr.trim().startsWith('[') ? JSON.parse(valStr) : valStr);
                     let pretty = typeof parsed === 'object' ? JSON.stringify(parsed, null, 2) : parsed;

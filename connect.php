@@ -18,8 +18,19 @@ catch (PDOException $e) {
 function getRealIP()
 {
     $ip = 'UNKNOWN';
-    // ใช้ REMOTE_ADDR โดยตรงเพื่อป้องกัน IP Spoofing จาก Header
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+    // เช็คจาก Header ที่ Proxy/Load Balancer มักจะส่งมาให้
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        $ip = $_SERVER['HTTP_CLIENT_IP'];
+    }
+    elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        // บางครั้งมาเป็น Array ของ IP (เช่น IP ลูกค้า, IP Proxy) ให้เอาตัวแรก
+        $ipList = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $ip = trim($ipList[0]);
+    }
+    else {
+        // ถ้าไม่มี Proxy คั่น ก็ใช้ IP ตรงๆ
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+    }
     return $ip;
 }
 

@@ -18,7 +18,7 @@ if (isset($_GET['clear'])) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
@@ -272,7 +272,7 @@ if (isset($_GET['clear'])) {
                         class="w-full px-4 py-3 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest">
                 </div>
                 <div class="flex justify-center mt-4">
-                    <div class="g-recaptcha" data-sitekey="6LdBRW8sAAAAAK0ZWGFEUO5Zlxye2sgOld-XHmhB"></div>
+                    <div id="turnstile-container"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 pt-2">
                     <button type="submit" id="submitBtn"
@@ -317,6 +317,8 @@ if (isset($_GET['clear'])) {
             window.location.href = 'https://portal.pathumthani.police.go.th';
         }
 
+        var turnstileWidgetId = null;
+
         function openModal(type) {
             const modal = document.getElementById('idCardModal');
             const title = document.getElementById('modalTitle');
@@ -332,10 +334,27 @@ if (isset($_GET['clear'])) {
                 title.innerText = 'ระบุเลขบัตรฯ เพื่อติดตามสถานะ';
                 title.className = 'text-xl font-bold text-yellow-700 mb-4 text-center';
             }
+
+            // Render Turnstile widget แบบ explicit ตอนเปิด modal
+            if (typeof turnstile !== 'undefined') {
+                // ลบ widget เก่าก่อน (ถ้ามี)
+                if (turnstileWidgetId !== null) {
+                    turnstile.remove(turnstileWidgetId);
+                }
+                turnstileWidgetId = turnstile.render('#turnstile-container', {
+                    sitekey: '0x4AAAAAACpD9GYXR9vpVNCE',
+                    theme: 'light'
+                });
+            }
         }
 
         function closeModal() {
             document.getElementById('idCardModal').classList.add('hidden');
+            // ลบ Turnstile widget ตอนปิด modal
+            if (typeof turnstile !== 'undefined' && turnstileWidgetId !== null) {
+                turnstile.remove(turnstileWidgetId);
+                turnstileWidgetId = null;
+            }
         }
 
         window.onclick = function (event) {
@@ -372,9 +391,9 @@ if (isset($_GET['clear'])) {
                 return false;
             }
 
-            var recaptchaResponse = grecaptcha.getResponse();
-            if (recaptchaResponse.length === 0) {
-                Swal.fire('แจ้งเตือน', 'กรุณากดติ๊กถูกที่ช่อง ฉันไม่ใช่โปรแกรมอัตโนมัติ (reCAPTCHA)', 'warning');
+            var turnstileResponse = document.querySelector('input[name="cf-turnstile-response"]');
+            if (!turnstileResponse || turnstileResponse.value.length === 0) {
+                Swal.fire('แจ้งเตือน', 'กรุณารอให้ระบบยืนยันตัวตน (Turnstile) เสร็จสิ้นก่อนกดยืนยัน', 'warning');
                 return false;
             }
 
@@ -428,7 +447,7 @@ if (isset($_GET['clear'])) {
                             text: data.message
                         });
                     }
-                    grecaptcha.reset();
+                    turnstile.reset();
                 } else if (data.status === 'success') {
                     if (data.action === 'redirect') {
                         window.location.href = data.url;
@@ -484,7 +503,7 @@ if (isset($_GET['clear'])) {
             } catch (error) {
                 console.error('Error:', error);
                 Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
-                grecaptcha.reset();
+                turnstile.reset();
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = originalText;

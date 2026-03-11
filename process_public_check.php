@@ -38,31 +38,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = trim($_POST['phone_number']); // 🆕 รับเบอร์โทร
     $action = $_POST['action_type']; // 'REQUEST' หรือ 'TRACK'
 
-    // 🟢 1. โค้ดตรวจสอบ reCAPTCHA กับทาง Google ด้วย cURL
-    $recaptcha_secret = "6LdBRW8sAAAAAF-wqJBme57m_3wkVGZwSKvdMt1J";
-    $recaptcha_response = $_POST['g-recaptcha-response'] ?? '';
+    // 🟢 1. โค้ดตรวจสอบ Cloudflare Turnstile ด้วย cURL
+    $turnstile_secret = "0x4AAAAAACpD9APctJNBwReyD4sd5eTO8Ak"; // Testing Key (Always passes) — เปลี่ยนเป็น Production Key ตอน Deploy
+    $turnstile_response = $_POST['cf-turnstile-response'] ?? '';
 
-    // ใช้ cURL ยิงข้อมูลไปถาม Google (ทะลุกำแพงเซิร์ฟเวอร์)
+    // ใช้ cURL ยิงข้อมูลไปถาม Cloudflare
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
+    curl_setopt($ch, CURLOPT_URL, "https://challenges.cloudflare.com/turnstile/v0/siteverify");
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-        'secret' => $recaptcha_secret,
-        'response' => $recaptcha_response
+        'secret' => $turnstile_secret,
+        'response' => $turnstile_response,
+        'remoteip' => $_SERVER['REMOTE_ADDR']
     ]));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ป้องกันปัญหาเซิร์ฟเวอร์ไม่รู้จักใบรับรอง Google
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
     $response = curl_exec($ch);
+    $curl_error = curl_error($ch);
     curl_close($ch);
 
     $response_data = json_decode($response);
 
     if (!$response_data || !$response_data->success) {
-        echo json_encode(['status' => 'error', 'type' => 'recaptcha', 'message' => 'ยืนยัน reCAPTCHA ไม่สำเร็จ (คุณอาจเป็นบอท หรือ Token หมดอายุ)']);
+        $msg = 'ยืนยันตัวตนไม่สำเร็จ (คุณอาจเป็นบอท หรือ Token หมดอายุ)';
+        if ($response_data && isset($response_data->{ 'error-codes'})) {
+            $msg .= ' | Error: ' . implode(', ', $response_data->{ 'error-codes'});
+        }
+        elseif (!$response_data) {
+            $msg .= ' | cURL Error: ' . $curl_error;
+        }
+        echo json_encode(['status' => 'error', 'type' => 'turnstile', 'message' => $msg]);
         exit;
     }
-    // 🟢 สิ้นสุดโค้ดตรวจสอบ reCAPTCHA
+    // 🟢 สิ้นสุดโค้ดตรวจสอบ Turnstile
 
     // 2. ตรวจสอบความถูกต้องของเลขบัตร
     if (strlen($id_card) !== 13 || !is_numeric($id_card)) {

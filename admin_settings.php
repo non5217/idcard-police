@@ -338,12 +338,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         foreach ($settings as $key => $val) {
-            $stmt = $conn->prepare("UPDATE idcard_settings SET setting_value = ? WHERE setting_key = ?");
-            $stmt->execute([$val, $key]);
+            // ใช้ INSERT ... ON DUPLICATE KEY UPDATE เพื่อความชัวร์ว่าจะมีข้อมูลเสมอ
+            $stmt = $conn->prepare("INSERT INTO idcard_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            $stmt->execute([$key, $val]);
         }
 
         saveLog($conn, 'SETTING_NOTIFICATIONS', 'อัปเดตการตั้งค่าการแจ้งเตือน (Discord/Line/Telegram)');
         $msg = "อัปเดตการตั้งค่าการแจ้งเตือนสำเร็จ";
+    }
+
+    // --- 🟢 ระบบทดสอบการแจ้งเตือน ---
+    elseif ($action === 'test_notification') {
+        if ($_SESSION['role'] !== 'Super_Admin')
+            die("Access Denied");
+        require_once 'notifications.php';
+        $type = $_POST['test_type'];
+
+        // จำลองการเตรียมข้อความทดสอบ
+        $test_msg = "🚨 **รายการทดสอบระบบการแจ้งเตือน**\nท่านได้รับข้อความนี้แสดงว่าการตั้งค่าระบบแจ้งเตือนถูกต้องแล้ว\nส่งเมื่อ: " . date('Y-m-d H:i:s');
+
+        $nt_settings = $conn->query("SELECT setting_key, setting_value FROM idcard_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+        if ($type === 'discord') {
+            $url = $nt_settings['discord_webhook_url'] ?? '';
+            if ($url) {
+                $res = sendCurl($url, json_encode(["content" => $test_msg]), ["Content-Type: application/json"]);
+                $msg = $res === "" || $res === "ok" ? "ส่งข้อความทดสอบไปที่ Discord แล้ว" : "❌ Discord Error: $res";
+            }
+            else
+                $msg = "❌ ไม่พบ Webhook URL";
+        }
+        elseif ($type === 'line') {
+            $token = $nt_settings['line_channel_access_token'] ?? '';
+            $user = $nt_settings['line_user_id'] ?? '';
+            if ($token && $user) {
+                $post_data = ['to' => $user, 'messages' => [['type' => 'text', 'text' => "🔔 [TEST] การแจ้งเตือนระบบทำบัตรฯ\n" . $test_msg]]];
+                $res = sendCurl("https://api.line.me/v2/bot/message/push", json_encode($post_data), ["Content-Type: application/json", "Authorization: Bearer $token"]);
+                $res_json = json_decode($res, true);
+                if ($res === '{}' || (isset($res_json) && empty($res_json['message'])))
+                    $msg = "ส่งข้อความทดสอบไปที่ LINE แล้ว";
+                else
+                    $msg = "❌ LINE Error: " . ($res_json['message'] ?? $res);
+            }
+            else
+                $msg = "❌ ไม่พบ Token หรือ User ID";
+        }
+        elseif ($type === 'telegram') {
+            $token = $nt_settings['telegram_bot_token'] ?? '';
+            $chat = $nt_settings['telegram_chat_id'] ?? '';
+            if ($token && $chat) {
+                $tg_url = "https://api.telegram.org/bot{$token}/sendMessage";
+                $res = sendCurl($tg_url, http_build_query(['chat_id' => $chat, 'text' => $test_msg]));
+                $res_json = json_decode($res, true);
+                if (isset($res_json['ok']) && $res_json['ok'])
+                    $msg = "ส่งข้อความทดสอบไปที่ Telegram แล้ว";
+                else
+                    $msg = "❌ Telegram Error: " . ($res_json['description'] ?? $res);
+            }
+            else
+                $msg = "❌ ไม่พบ Bot Token หรือ Chat ID";
+        }
+        elseif ($type === 'all') {
+            $results = [];
+
+            // Discord
+            $url = $nt_settings['discord_webhook_url'] ?? '';
+            if ($url) {
+                $res = sendCurl($url, json_encode(["content" => $test_msg]), ["Content-Type: application/json"]);
+                $results[] = ($res === "" || $res === "ok") ? "✅ Discord: OK" : "❌ Discord: Error ($res)";
+            }
+
+            // LINE
+            $token = $nt_settings['line_channel_access_token'] ?? '';
+            $user = $nt_settings['line_user_id'] ?? '';
+            if ($token && $user) {
+                $post_data = ['to' => $user, 'messages' => [['type' => 'text', 'text' => "🔔 [TEST] $test_msg"]]];
+                $res = sendCurl("https://api.line.me/v2/bot/message/push", json_encode($post_data), ["Content-Type: application/json", "Authorization: Bearer $token"]);
+                $res_json = json_decode($res, true);
+                $line_ok = ($res === '{}' || (isset($res_json) && empty($res_json['message'])));
+                $results[] = $line_ok ? "✅ LINE: OK" : "❌ LINE: Error";
+            }
+
+            // Telegram
+            $token = $nt_settings['telegram_bot_token'] ?? '';
+            $chat = $nt_settings['telegram_chat_id'] ?? '';
+            if ($token && $chat) {
+                $tg_url = "https://api.telegram.org/bot{$token}/sendMessage";
+                $res = sendCurl($tg_url, http_build_query(['chat_id' => $chat, 'text' => $test_msg]));
+                $res_json = json_decode($res, true);
+                $tg_ok = (isset($res_json['ok']) && $res_json['ok']);
+                $results[] = $tg_ok ? "✅ Telegram: OK" : "❌ Telegram: Error";
+            }
+
+            $msg = count($results) > 0 ? implode("<br>", $results) : "❌ ไม่พบการตั้งค่าช่องทางใดๆ";
+        }
     }
 
 
@@ -460,7 +548,7 @@ $current_max_seq = (int)$stmt_max->fetchColumn();
                                 </td>
                                 <td class="p-2 border leading-tight">
                                     <strong>
-                                        <?= $i['rank_name'] . ' ' . $i['full_name']?>
+                                        <?= $i['rank_name'] . $i['full_name']?>
                                     </strong><br>
                                     <span class="text-xs text-gray-500">
                                         <?= $i['position']?>
@@ -769,15 +857,21 @@ endforeach; ?>
 
                     <!-- Discord -->
                     <div class="space-y-3 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i class="fab fa-discord text-2xl text-indigo-600"></i>
-                            <h3 class="font-bold text-gray-800">Discord Notification</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fab fa-discord text-2xl text-indigo-600"></i>
+                                <h3 class="font-bold text-gray-800">Discord Notification</h3>
+                            </div>
+                            <button type="button" onclick="testNotify('discord')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded font-bold transition">
+                                <i class="fas fa-paper-plane mr-1"></i> TEST
+                            </button>
                         </div>
                         <div class="relative">
                             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Webhook URL</label>
                             <input type="password" id="discord_webhook" name="discord_webhook_url"
                                 value="<?= htmlspecialchars($discord_webhook)?>"
                                 placeholder="https://discord.com/api/webhooks/..."
+                                autocomplete="off"
                                 class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-indigo-400 outline-none">
                             <button type="button" onclick="toggleVisibility('discord_webhook')"
                                 class="absolute right-3 top-8 text-gray-400 hover:text-indigo-600">
@@ -795,12 +889,16 @@ endforeach; ?>
                                 <i class="fab fa-line text-2xl text-green-600"></i>
                                 <h3 class="font-bold text-gray-800">LINE Messaging API</h3>
                             </div>
-                            <div class="text-right">
-                                <span class="text-[10px] font-bold text-gray-500 block uppercase">โควต้าเดือนนี้</span>
-                                <span
-                                    class="<?= $line_msg_count >= 300 ? 'text-red-600' : 'text-green-700'?> font-bold text-sm">
-                                    <?= $line_msg_count?> / 300
-                                </span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="testNotify('line')" class="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-bold transition">
+                                    <i class="fas fa-paper-plane mr-1"></i> TEST
+                                </button>
+                                <div class="text-right border-l pl-2 border-green-200">
+                                    <span class="text-[10px] font-bold text-gray-500 block uppercase leading-none">โควต้า</span>
+                                    <span class="<?= $line_msg_count >= 300 ? 'text-red-600' : 'text-green-700'?> font-bold text-xs">
+                                        <?= $line_msg_count?>/300
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="space-y-3">
@@ -810,6 +908,7 @@ endforeach; ?>
                                 <input type="password" id="line_token" name="line_channel_access_token"
                                     value="<?= htmlspecialchars($line_channel_token)?>"
                                     placeholder="ระบุ Long-lived Access Token..."
+                                    autocomplete="off"
                                     class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-green-400 outline-none">
                                 <button type="button" onclick="toggleVisibility('line_token')"
                                     class="absolute right-3 top-8 text-gray-400 hover:text-green-600">
@@ -821,6 +920,7 @@ endforeach; ?>
                                     ID</label>
                                 <input type="password" id="line_user" name="line_user_id"
                                     value="<?= htmlspecialchars($line_user_id)?>" placeholder="e.g. U123456789abcdef..."
+                                    autocomplete="off"
                                     class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-green-400 outline-none">
                                 <button type="button" onclick="toggleVisibility('line_user')"
                                     class="absolute right-3 top-8 text-gray-400 hover:text-green-600">
@@ -835,15 +935,28 @@ endforeach; ?>
 
                     <!-- Telegram -->
                     <div class="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-100 md:col-span-2">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i class="fab fa-telegram text-2xl text-blue-500"></i>
-                            <h3 class="font-bold text-gray-800">Telegram Bot Notification</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fab fa-telegram text-2xl text-blue-500"></i>
+                                <h3 class="font-bold text-gray-800">Telegram Bot Notification</h3>
+                            </div>
+                            <button type="button" onclick="testNotify('telegram')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded font-bold transition">
+                                <i class="fas fa-paper-plane mr-1"></i> TEST MESSAGE
+                            </button>
+                        </div>
+                        <!-- diagnostic -->
+                        <div class="md:col-span-2 flex justify-between items-center bg-white p-3 rounded-lg border border-dashed border-gray-300 mt-2">
+                             <div class="text-xs text-gray-400"><i class="fas fa-info-circle"></i> ทดสอบการส่งแจ้งเตือนไปยังทุกช่องทางพร้อมกัน</div>
+                             <button type="button" onclick="testAllNotify()" class="bg-gray-800 hover:bg-black text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow-sm">
+                                <i class="fas fa-microscope mr-1"></i> TEST ALL CHANNELS
+                             </button>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="relative">
                                 <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Bot Token</label>
                                 <input type="password" id="tg_token" name="telegram_bot_token"
                                     value="<?= htmlspecialchars($tg_bot_token)?>" placeholder="e.g. 123456:ABC-DEF..."
+                                    autocomplete="off"
                                     class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none">
                                 <button type="button" onclick="toggleVisibility('tg_token')"
                                     class="absolute right-3 top-8 text-gray-400 hover:text-blue-600">
@@ -854,6 +967,7 @@ endforeach; ?>
                                 <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Chat ID</label>
                                 <input type="password" id="tg_chat" name="telegram_chat_id"
                                     value="<?= htmlspecialchars($tg_chat_id)?>" placeholder="e.g. -10012345678"
+                                    autocomplete="off"
                                     class="w-full border p-2 pr-10 rounded bg-white text-sm focus:ring-2 focus:ring-blue-400 outline-none">
                                 <button type="button" onclick="toggleVisibility('tg_chat')"
                                     class="absolute right-3 top-8 text-gray-400 hover:text-blue-600">
@@ -893,6 +1007,53 @@ endif; ?>
                 eye.classList.remove('fa-eye-slash');
                 eye.classList.add('fa-eye');
             }
+        }
+
+        // ฟังก์ชันส่งทดสอบการแจ้งเตือน
+        function testNotify(type) {
+            Swal.fire({
+                title: 'ส่งข้อความทดสอบ?',
+                text: "ระบบจะส่งข้อความทดสอบไปยัง " + type.toUpperCase() + " ตามค่าที่ตั้งไว้ (ต้องกดบันทึกก่อน หากแก้ไขข้อมูลใหม่)",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '🚀 เริ่มทดสอบ'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let form = document.createElement('form');
+                    form.method = 'POST';
+                    form.innerHTML = `
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                        <input type="hidden" name="action" value="test_notification">
+                        <input type="hidden" name="test_type" value="${type}">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function testAllNotify() {
+             Swal.fire({
+                title: 'ทดสอบทุกช่องทาง?',
+                text: "ระบบจะส่งข้อความทดสอบไปยัง Discord, LINE และ Telegram (ที่ตั้งค่าไว้)",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '🚀 เริ่มทดสอบทั้งหมด'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                     // เราจะใช้การส่งทีละอันแบบวนลูป หรือสร้าง action ใหม่
+                     // เพื่อความง่าย ผมจะสร้าง action ใหม่ใน admin_settings.php
+                    let form = document.createElement('form');
+                    form.method = 'POST';
+                    form.innerHTML = `
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                        <input type="hidden" name="action" value="test_notification">
+                        <input type="hidden" name="test_type" value="all">
+                    `;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         }
     </script>
 

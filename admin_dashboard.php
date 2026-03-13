@@ -253,7 +253,7 @@ function renderTableRow($req, $index, $is_rejected = false)
     echo "<td class='py-4 px-5'>";
     if ($is_rejected)
         echo "<del class='text-gray-400'>";
-    echo "<div class='font-semibold text-gray-800 text-sm'>" . htmlspecialchars($req['rank_name'] . ' ' . $req['full_name']) . "</div>";
+    echo "<div class='font-semibold text-gray-800 text-sm'>" . htmlspecialchars($req['rank_name'] . $req['full_name']) . "</div>";
     if ($is_rejected)
         echo "</del>";
 

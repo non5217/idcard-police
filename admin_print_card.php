@@ -135,7 +135,7 @@ if (strlen($id_formatted) == 13) {
     $id_formatted = substr($id_formatted,0,1).' - '.substr($id_formatted,1,4).' - '.substr($id_formatted,5,5).' - '.substr($id_formatted,10,2).' - '.substr($id_formatted,12,1);
 }
 $id_card_thai = toThaiNum($id_formatted);
-$full_name_rank = $req['rank_name'] . ' ' . $req['full_name'];
+$full_name_rank = $req['rank_name'] . $req['full_name'];
 
 // 💡 ระบบอัจฉริยะ: ถ้าข้อมูลคนเซ็นเก่าหายไป ให้ดึงคนที่ Active อยู่ปัจจุบันมาแทนอัตโนมัติ (ทั้งรูปลายเซ็น ยศ และตำแหน่ง)
 $issuer_sig_path = $req['issuer_sig'];

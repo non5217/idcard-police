@@ -52,7 +52,7 @@ function sendIDCardNotification($conn, $requestId) {
 
     $message = "🔔 **มีรายการยื่นคำขอทำบัตรใหม่เข้ามา!**\n";
     $message .= "----------------------------------\n";
-    $message .= "👤 ยศ/ชื่อ/สกุล: {$rank_name} {$full_name}\n";
+    $message .= "👤 ยศ/ชื่อ/สกุล: {$rank_name}{$full_name}\n";
     $message .= "🆔 เลขบัตร ปชช.: {$id_card}\n";
     $message .= "📍 ตำแหน่ง: {$position}\n";
     $message .= "🏢 สังกัด: {$org_name}\n";
@@ -102,7 +102,7 @@ function sendIDCardNotification($conn, $requestId) {
                         'layout' => 'vertical',
                         'spacing' => 'sm',
                         'contents' => [
-                            ['type' => 'text', 'text' => "👤 {$rank_name} {$full_name}", 'weight' => 'bold', 'size' => 'md', 'wrap' => true],
+                            ['type' => 'text', 'text' => "👤 {$rank_name}{$full_name}", 'weight' => 'bold', 'size' => 'md', 'wrap' => true],
                             ['type' => 'separator', 'margin' => 'md'],
                             [
                                 'type' => 'box',

@@ -166,7 +166,7 @@ function renderTimeline($current_status, $reject_reason = '')
     if ($current_index === false)
         $current_index = -1; // Fallback for unknown status
 
-    $html = '<div class="relative pl-8 space-y-6 before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gray-200">';
+    $html = '<div class="relative pl-8 space-y-6">';
 
     foreach ($status_keys as $index => $key) {
         $step = $steps[$key];

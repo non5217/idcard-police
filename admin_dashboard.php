@@ -22,8 +22,8 @@ function getStatusLabelAdmin($status)
     $l = [
         'PENDING_CHECK' => 'รอตรวจสอบ',
         'PENDING_APPROVAL' => 'รออนุมัติ',
-        'SENT_TO_PRINT' => 'ส่งพิมพ์บัตรแล้ว',
-        'READY_PICKUP' => 'บัตรเสร็จแล้ว/รอรับ',
+        'SENT_TO_PRINT' => 'รอพิมพ์บัตร',
+        'READY_PICKUP' => 'พิมพ์บัตรแล้ว / รอรับ',
         'COMPLETED' => 'รับบัตรแล้ว (จบงาน)',
         'REJECTED' => 'ปฏิเสธคำขอ'
     ];
@@ -66,7 +66,7 @@ function fetchRequestsByStatus($conn, $status, $page, $limit, $search_cond, $par
     $stmt_count->execute(array_merge([$status], $params));
     $total = $stmt_count->fetchColumn();
 
-    // 🟢 กำหนดการเรียงลำดับ: ถ้าเป็น "บัตรเสร็จแล้ว" หรือ "รับแล้ว" ให้เรียงตามเลขบัตรล่าสุด (ปี และ ลำดับ)
+    // 🟢 กำหนดการเรียงลำดับ: ถ้าเป็น "พิมพ์บัตรแล้ว" หรือ "รับแล้ว" ให้เรียงตามเลขบัตรล่าสุด (ปี และ ลำดับ)
     $order_sql = "ORDER BY r.created_at DESC";
     if (in_array($status, ['READY_PICKUP', 'COMPLETED'])) {
         $order_sql = "ORDER BY r.card_year DESC, r.card_sequence DESC, r.created_at DESC";
@@ -150,7 +150,7 @@ $blocks = [
     ],
     [
         'status' => 'SENT_TO_PRINT',
-        'title' => 'รายการคำขอ "ส่งพิมพ์บัตรแล้ว"',
+        'title' => 'รายการคำขอ "รอพิมพ์บัตร"',
         'icon' => 'fas fa-print',
         'border' => 'border-purple-400',
         'text_icon' => 'text-purple-600',
@@ -159,7 +159,7 @@ $blocks = [
     ],
     [
         'status' => 'READY_PICKUP',
-        'title' => 'รายการคำขอ "บัตรเสร็จแล้ว / รอรับ"',
+        'title' => 'รายการคำขอ "พิมพ์บัตรแล้ว / รอรับ"',
         'icon' => 'fas fa-id-badge',
         'border' => 'border-green-400',
         'text_icon' => 'text-green-600',

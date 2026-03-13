@@ -655,7 +655,7 @@ if (empty($inspector_sig_path) || !file_exists($inspector_sig_path)) {
             setTimeout(() => {
                 Swal.fire({
                     title: 'สั่งพิมพ์สำเร็จใช่หรือไม่?',
-                    text: 'ต้องการเปลี่ยนสถานะเป็น "บัตรเสร็จแล้ว/รอรับ" และกลับหน้าแดชบอร์ดหรือไม่?',
+                    text: 'ต้องการเปลี่ยนสถานะเป็น "พิมพ์บัตรแล้ว / รอรับ" และกลับหน้าแดชบอร์ดหรือไม่?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#2563eb',
@@ -694,7 +694,7 @@ if (empty($inspector_sig_path) || !file_exists($inspector_sig_path)) {
                                 
                                 Swal.fire({
                                     title: 'สำเร็จ!',
-                                    text: 'เปลี่ยนสถานะเป็น "บัตรเสร็จแล้ว" เรียบร้อย',
+                                    text: 'เปลี่ยนสถานะเป็น "พิมพ์บัตรแล้ว / รอรับ" เรียบร้อย',
                                     icon: 'success',
                                     timer: 1500,
                                     showConfirmButton: false

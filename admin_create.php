@@ -113,10 +113,10 @@ $issue_db = date('Y-m-d');
                         <label class="block text-sm font-bold">สถานะ</label>
                         <select name="status" class="w-full border p-2 rounded bg-white">
                             <option value="PENDING_CHECK" selected>รอตรวจสอบ (ยังไม่ออกเลข)</option>
-                            <option value="SENT_TO_PRINT">ส่งพิมพ์บัตร (ออกเลขทันที)</option>
+                            <option value="SENT_TO_PRINT">รอพิมพ์บัตร (ออกเลขทันที)</option>
                             <option value="COMPLETED">รับบัตรแล้ว (จบงาน) - ใช้กรณีคีย์ประวัติย้อนหลัง</option>
                         </select>
-                        <p class="text-xs text-blue-600 mt-1">* หากเลือก "ส่งพิมพ์บัตร" หรือ "รับบัตรแล้ว"
+                        <p class="text-xs text-blue-600 mt-1">* หากเลือก "รอพิมพ์บัตร" หรือ "รับบัตรแล้ว"
                             ระบบจะรันเลขทะเบียนให้อัตโนมัติเมื่อกดบันทึก</p>
                     </div>
                 </div>

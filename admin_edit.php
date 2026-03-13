@@ -51,9 +51,34 @@ $reason_map = [
 ];
 $status_map = [
     'PENDING_CHECK' => 'รอตรวจสอบ', 'PENDING_APPROVAL' => 'รออนุมัติ',
-    'SENT_TO_PRINT' => 'ส่งพิมพ์บัตรแล้ว', 'READY_PICKUP' => 'บัตรเสร็จแล้ว',
+    'SENT_TO_PRINT' => 'รอพิมพ์บัตร', 'READY_PICKUP' => 'พิมพ์บัตรแล้ว / รอรับ',
     'COMPLETED' => 'รับบัตรแล้ว (จบงาน)', 'REJECTED' => 'ปฏิเสธคำขอ'
 ];
+
+// 🟢 Dynamic Workflow Button Logic
+$dynamic_btn = null;
+if ($req['status'] === 'PENDING_CHECK') {
+    $dynamic_btn = [
+        'label' => 'เปลี่ยนเป็นสถานะ "รออนุมัติ"',
+        'target_status' => 'PENDING_APPROVAL',
+        'color' => 'bg-indigo-600 hover:bg-indigo-700',
+        'icon' => 'fa-check-circle'
+    ];
+} elseif ($req['status'] === 'PENDING_APPROVAL') {
+    $dynamic_btn = [
+        'label' => 'เปลี่ยนเป็นสถานะ "รอพิมพ์บัตร"',
+        'target_status' => 'SENT_TO_PRINT',
+        'color' => 'bg-blue-600 hover:bg-blue-700',
+        'icon' => 'fa-print'
+    ];
+} elseif ($req['status'] === 'SENT_TO_PRINT') {
+    $dynamic_btn = [
+        'label' => 'เปลี่ยนเป็นสถานะ "พิมพ์บัตรแล้ว / รอรับ"',
+        'target_status' => 'READY_PICKUP',
+        'color' => 'bg-teal-600 hover:bg-teal-700',
+        'icon' => 'fa-flag-checkered'
+    ];
+}
 
 // แปลง JSON ที่อยู่
 $addr = json_decode($req['address_json'], true) ?? [];
@@ -198,7 +223,7 @@ endif; ?>
 else: ?>
                 <p class="text-xs text-gray-500 mb-4 bg-white p-2 rounded border inline-block">
                     <i class="fas fa-info-circle text-blue-500"></i> เลขทะเบียนบัตรจะถูกสร้างอัตโนมัติเมื่อสถานะเป็น
-                    "ส่งพิมพ์บัตร"
+                    "รอพิมพ์บัตร"
                 </p>
                 <?php
 endif; ?>
@@ -211,15 +236,15 @@ endif; ?>
 $statuses = [
     'PENDING_CHECK' => 'รอตรวจสอบ',
     'PENDING_APPROVAL' => 'รออนุมัติ',
-    'SENT_TO_PRINT' => 'ส่งพิมพ์บัตร',
-    'READY_PICKUP' => 'บัตรเสร็จแล้ว/รอรับ',
+    'SENT_TO_PRINT' => 'รอพิมพ์บัตร',
+    'READY_PICKUP' => 'พิมพ์บัตรแล้ว / รอรับ',
     'COMPLETED' => 'รับบัตรแล้ว (จบงาน)',
     'REJECTED' => 'ปฏิเสธคำขอ',
     'CANCELLED' => 'ยกเลิก/ซ่อนคำขอ (Soft Delete)'
 ];
 foreach ($statuses as $key => $label):
 ?>
-                            <option value="<?= $key?>" <?=$req['status']==$key ? 'selected' : '' ?>>
+                            <option value="<?= $key?>" <?= $req['status'] == $key ? 'selected' : ''?>>
                                 <?= $label?>
                             </option>
                             <?php
@@ -241,7 +266,7 @@ endforeach; ?>
                         <?php foreach ($rank_sort_order as $rid):
     if (isset($ranks_by_id[$rid])):
         $r = $ranks_by_id[$rid]; ?>
-                        <option value="<?= $r['id']?>" <?=$req['rank_id']==$r['id'] ? 'selected' : '' ?>>
+                        <option value="<?= $r['id']?>" <?= $req['rank_id'] == $r['id'] ? 'selected' : ''?>>
                             <?= $r['rank_name']?>
                         </option>
                         <?php
@@ -295,7 +320,7 @@ $lname = htmlspecialchars($parts[1] ?? '', ENT_QUOTES, 'UTF-8');
                     <select name="blood_type" class="w-full border p-2 rounded bg-white">
                         <option value="">-</option>
                         <?php foreach (['O', 'A', 'B', 'AB'] as $b): ?>
-                        <option value="<?= $b?>" <?=($req['blood_type'] ?? '' )==$b ? 'selected' : '' ?>>
+                        <option value="<?= $b?>" <?=($req['blood_type'] ?? '') == $b ? 'selected' : ''?>>
                             <?= $b?>
                         </option>
                         <?php
@@ -356,7 +381,7 @@ endforeach; ?>
                     <label class="block text-sm font-bold">ประเภทบัตร</label>
                     <select name="card_type_id" class="w-full border p-2 rounded bg-white" required>
                         <?php foreach ($card_types as $ct): ?>
-                        <option value="<?= $ct['id']?>" <?=$req['card_type_id']==$ct['id'] ? 'selected' : '' ?>>
+                        <option value="<?= $ct['id']?>" <?= $req['card_type_id'] == $ct['id'] ? 'selected' : ''?>>
                             <?= $ct['type_name']?>
                         </option>
                         <?php
@@ -366,11 +391,11 @@ endforeach; ?>
                 <div>
                     <label class="block text-sm font-bold">ประเภท จนท.</label>
                     <select name="officer_type" class="w-full border p-2 rounded bg-white" required>
-                        <option value="POLICE" <?=$req['officer_type']=='POLICE' ? 'selected' : '' ?>>ข้าราชการตำรวจ
+                        <option value="POLICE" <?= $req['officer_type'] == 'POLICE' ? 'selected' : ''?>>ข้าราชการตำรวจ
                         </option>
-                        <option value="PERMANENT_EMP" <?=$req['officer_type']=='PERMANENT_EMP' ? 'selected' : '' ?>
+                        <option value="PERMANENT_EMP" <?= $req['officer_type'] == 'PERMANENT_EMP' ? 'selected' : ''?>
                             >ลูกจ้างประจำ</option>
-                        <option value="GOV_EMP" <?=$req['officer_type']=='GOV_EMP' ? 'selected' : '' ?>>พนักงานราชการ
+                        <option value="GOV_EMP" <?= $req['officer_type'] == 'GOV_EMP' ? 'selected' : ''?>>พนักงานราชการ
                         </option>
                     </select>
                 </div>
@@ -390,7 +415,7 @@ endforeach; ?>
                     <label class="block text-sm font-bold">สังกัด</label>
                     <select name="org_id" class="w-full border p-2 rounded bg-white">
                         <?php foreach ($orgs as $o): ?>
-                        <option value="<?= $o['id']?>" <?=$req['org_id']==$o['id'] ? 'selected' : '' ?>>
+                        <option value="<?= $o['id']?>" <?= $req['org_id'] == $o['id'] ? 'selected' : ''?>>
                             <?= $o['org_name']?>
                         </option>
                         <?php
@@ -477,17 +502,17 @@ endif; ?>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
                 <script>
                     // กำหนด Worker ให้ PDF.js
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16min.js';
                 </script>
 
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
                 <script>
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16min.js';
                 </script>
 
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
                 <script>
-                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16min.js';
                 </script>
 
                 <div class="bg-gray-50 p-4 rounded border border-gray-200">
@@ -619,7 +644,7 @@ if (!empty($docs) && is_array($docs) && count($docs) > 0):
                                     container.removeAttribute('data-b64');
                                 }
                             });
-                        });
+    });
                     </script>
 
                     <?php
@@ -653,13 +678,13 @@ endif; ?>
                             <span class="block text-sm font-bold text-gray-700">วันหมดอายุบัตร (พ.ศ.)</span>
                             <label
                                 class="inline-flex items-center text-xs text-blue-700 font-bold cursor-pointer bg-blue-100 px-2 py-1 rounded shadow-sm hover:bg-blue-200 transition">
-                                <input type="checkbox" id="is_lifetime" class="mr-1.5 w-3.5 h-3.5" <?=$is_lifetime
-                                    ? 'checked' : '' ?>> บัตรตลอดชีพ
+                                <input type="checkbox" id="is_lifetime" class="mr-1.5 w-3.5 h-3.5" <?= $is_lifetime
+    ? 'checked' : ''?>> บัตรตลอดชีพ
                             </label>
                         </label>
                         <input type="text" id="expire_date_th" value="<?= $expire_th?>"
                             class="w-full border border-gray-300 p-2.5 rounded text-center font-bold tracking-widest text-lg focus:ring-2 focus:ring-indigo-400 outline-none <?= $is_lifetime ? 'bg-gray-200 cursor-not-allowed text-gray-400' : 'bg-white'?>"
-                            placeholder="วว/ดด/ปปปป" <?=$is_lifetime ? 'readonly' : '' ?>>
+                            placeholder="วว/ดด/ปปปป" <?= $is_lifetime ? 'readonly' : ''?>>
                         <input type="hidden" name="expire_date" id="expire_date_db"
                             value="<?= $req['expire_date'] ?? ''?>">
                         <p class="text-[11px] text-gray-500 mt-1">ปล่อยว่างไว้ ระบบจะคำนวณวันเกษียณ/หมดอายุ ให้อัตโนมัติ
@@ -683,8 +708,18 @@ endif; ?>
                 <button type="submit"
                     onclick="document.getElementById('save_action').value='save_and_print'; document.getElementById('status').value='SENT_TO_PRINT';"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-lg shadow-lg transition transform hover:scale-105">
-                    <i class="fas fa-print"></i> บันทึกและส่งพิมพ์
+                    <i class="fas fa-print"></i> บันทึกและรอพิมพ์บัตร
                 </button>
+
+                <?php if ($dynamic_btn): ?>
+                <button type="submit"
+                    onclick="document.getElementById('save_action').value='save'; document.getElementById('status').value='<?= $dynamic_btn['target_status']?>';"
+                    class="<?= $dynamic_btn['color']?> text-white px-6 py-3 rounded-xl font-bold text-lg shadow-lg transition transform hover:scale-105">
+                    <i class="fas <?= $dynamic_btn['icon']?>"></i>
+                    <?= $dynamic_btn['label']?>
+                </button>
+                <?php
+endif; ?>
             </div>
 
         </form>
@@ -1149,8 +1184,7 @@ endif; ?>
                 }
             }).catch(err => {
                 console.error(err);
-                Swal.fire('เกิดข้อผิดพลาด', 'ปัญหาการเชื่อมต่อเซิร์ฟเวอร์', 'error');
-            });
+                Swal.fire('เกิดข้อผิดพลาด', 'ปัญหาการเชื่อมต่อเซิร์ฟเวอร์', 'e')       });
         }
     </script>
 

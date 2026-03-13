@@ -124,8 +124,8 @@ function getStatusBadge($status)
     $labels = [
         'PENDING_CHECK' => 'รอตรวจสอบ',
         'PENDING_APPROVAL' => 'รออนุมัติ',
-        'SENT_TO_PRINT' => 'ส่งพิมพ์บัตรแล้ว',
-        'READY_PICKUP' => 'บัตรเสร็จแล้ว/รอรับ',
+        'SENT_TO_PRINT' => 'รอพิมพ์บัตร',
+        'READY_PICKUP' => 'พิมพ์บัตรแล้ว / รอรับ',
         'COMPLETED' => 'รับบัตรแล้ว (จบงาน)',
         'REJECTED' => 'ปฏิเสธคำขอ'
     ];

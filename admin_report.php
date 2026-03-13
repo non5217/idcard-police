@@ -45,8 +45,8 @@ if (isset($_GET['export_year'])) {
     $i = 1;
     while ($row = $stmt_export->fetch(PDO::FETCH_ASSOC)) {
         $status_label = [
-            'SENT_TO_PRINT' => 'ส่งพิมพ์บัตรแล้ว',
-            'READY_PICKUP' => 'รอรับบัตร',
+            'SENT_TO_PRINT' => 'รอพิมพ์บัตร',
+            'READY_PICKUP' => 'พิมพ์บัตรแล้ว / รอรับ',
             'COMPLETED' => 'รับบัตรแล้ว (จบงาน)'
         ][$row['status']] ?? $row['status'];
 
@@ -293,7 +293,7 @@ else: ?>
                 <?php
 endif; ?>
                 <p class="text-xs text-gray-500 mt-4">* หมายเหตุ: ระบบจะนับและ Export เฉพาะคำขอที่มีสถานะ
-                    "ส่งพิมพ์บัตรแล้ว", "รอรับบัตร" และ "รับบัตรแล้ว" เท่านั้น</p>
+                    "รอพิมพ์บัตร", "รอรับบัตร" และ "รับบัตรแล้ว" เท่านั้น</p>
             </div>
         </div>
 

@@ -491,14 +491,14 @@ endforeach; ?>
                 </div>
 
                 <div class="bg-yellow-50 p-4 rounded border border-yellow-200">
-                    <h3 class="section-title">6. เหตุผลของการขอบัตร <span class="text-red-500">*</span></h3>
+                    <h3 class="section-title">6. เหตุผลของการขอบัตร (หากเลือกไม่ถูกต้อง คำขอจะถูกปฏิเสธ)<span class="text-red-500">*</span></h3>
 
                     <div class="mb-2">
                         <label class="inline-flex items-center font-bold">
                             <input type="radio" name="request_reason" value="FIRST" <?= val('request_reason') == 'FIRST'
     ? 'checked' : ''?> onclick="toggleReason(); updateRequiredDocs();" required
                             class="form-radio h-5 w-5 text-blue-600">
-                            <span class="ml-2">1. ขอมีบัตรครั้งแรก (บรรจุครั้งแรก)</span>
+                            <span class="ml-2">1. ขอมีบัตรครั้งแรก (ไม่เคยมีบัตรข้าราชการมาก่อน)</span>
                         </label>
                     </div>
 

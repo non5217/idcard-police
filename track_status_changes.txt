@@ -1,5 +1,0 @@
-- [x] Responsive Redesign: Updated track_status.php grid and timeline layouts using Tailwind 'sm:' utility classes to display properly on all device widths. Text and form blocks are now optimized specifically for mobile readability.
-- [x] Line Application Sharing: Added functionality to share the ID progress link directly directly via the Line app window using scheme line://msg/text.
-- [x] Fix session data population in "Edit Data": Ensuring `$_SESSION['form_prefill']` captures historical request data properly before redirecting back to `request.php`.
-- [x] Display translated request reasons using text-mapping lookup object to produce human-readable status outputs (`getReasonText()`).
-- [x] Refactored Share UI URL Input block. Replace standard button to URL input area for clarity. 

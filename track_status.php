@@ -142,8 +142,8 @@ function renderTimeline($current_status, $reject_reason = '')
     $steps = [
         'PENDING_CHECK' => ['label' => 'รอตรวจสอบ', 'icon' => 'fas fa-file-signature'],
         'PENDING_APPROVAL' => ['label' => 'รออนุมัติ', 'icon' => 'fas fa-user-check'],
-        'SENT_TO_PRINT' => ['label' => 'กำลังจัดพิมพ์', 'icon' => 'fas fa-print'],
-        'READY_PICKUP' => ['label' => 'บัตรเสร็จ/รอรับ', 'icon' => 'fas fa-id-card'],
+        'SENT_TO_PRINT' => ['label' => 'รอพิมพ์บัตร', 'icon' => 'fas fa-print'],
+        'READY_PICKUP' => ['label' => 'บัตรเสร็จแล้ว', 'icon' => 'fas fa-id-card'],
         'COMPLETED' => ['label' => 'รับบัตรแล้ว (จบงาน)', 'icon' => 'fas fa-check-circle']
     ];
 
@@ -208,7 +208,7 @@ function renderTimeline($current_status, $reject_reason = '')
         $html .= '</div>';
 
         // เนื้อหา
-        $html .= '<div class="pl-2">';
+        $html .= '<div class="pl-8">';
         $html .= '<div class="flex items-center gap-2 ' . $textColor . '">';
         $html .= '<i class="' . $step['icon'] . ' text-lg sm:text-base ' . ($is_current ? 'text-blue-500' : $iconColor) . '"></i>';
         $html .= '<span class="text-base sm:text-sm font-semibold sm:font-normal">' . $step['label'] . '</span>';
@@ -429,7 +429,7 @@ endif; ?>
             const copyText = document.getElementById("shareUrlInput");
             copyText.select();
             copyText.setSelectionRange(0, 99999); // สำหรับมือถือ
-            
+
             navigator.clipboard.writeText(copyText.value).then(() => {
                 Swal.fire({
                     title: 'คัดลอกลิงก์สำเร็จ!',

@@ -7,7 +7,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+    echo json_encode(['status' => 'error', 'message' => 'Method not allowed.']);
     exit();
 }
 
@@ -16,7 +16,7 @@ $note_text = isset($_POST['note_text']) ? trim($_POST['note_text']) : '';
 $admin_name = $_SESSION['fullname'] ?? 'Unknown Admin';
 
 if (empty($id_card_number) || empty($note_text)) {
-    echo json_encode(['success' => false, 'message' => 'Missing ID Card Number or Note Text.']);
+    echo json_encode(['status' => 'error', 'message' => 'Missing ID Card Number or Note Text.']);
     exit();
 }
 
@@ -33,9 +33,9 @@ try {
     $fetchStmt->execute([$note_id]);
     $note = $fetchStmt->fetch(PDO::FETCH_ASSOC);
 
-    echo json_encode(['success' => true, 'note' => $note]);
+    echo json_encode(['status' => 'success', 'note' => $note]);
 }
 catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
 }
 ?>

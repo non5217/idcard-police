@@ -280,7 +280,8 @@ function renderTimeline($current_status, $reject_reason = '')
                 <div class="mb-3 sm:mb-2 text-sm font-bold text-blue-800 flex items-start sm:items-center gap-2">
                     <i class="fas fa-share-alt mt-1 sm:mt-0"></i>
                     <span>ลิงก์สำหรับส่งต่อหรือติดตามสถานะ <span
-                            class="block sm:inline text-xs sm:text-sm font-normal sm:font-bold opacity-80">(ไม่ต้องล็อกอินใหม่)</span></span>
+                            class="block sm:inline text-xs sm:text-sm font-normal sm:font-bold opacity-80">(มีอายุ 30
+                            วัน)</span></span>
                 </div>
                 <div class="flex flex-col sm:flex-row shadow-sm gap-2 sm:gap-0">
                     <input type="text" id="shareUrlInput" value="<?= $share_url?>" readonly

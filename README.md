@@ -1,8 +1,8 @@
 # 🪪 ID Card Issuance System (ระบบจัดการบัตรประจำตัวเจ้าหน้าที่รัฐอัจฉริยะ)
 
-![Version](https://img.shields.io/badge/version-2.1.0-blue?style=for-the-badge)
-![Status](https://img.shields.io/badge/status-production-success?style=for-the-badge)
-![Security](https://img.shields.io/badge/security-audited-brightgreen?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.2.0-blue?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-production--success?style=for-the-badge)
+![Security](https://img.shields.io/badge/security-audited%20%26%20secured-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-Private-red?style=for-the-badge)
 
 <p align="center">
@@ -78,9 +78,36 @@ idcard/
 
 ---
 
+### 🔒 ความปลอดภัยและการแก้ไข (Security Audit & Fixes)
+
+#### ✅ **Security Improvements Applied:**
+- **🔒 Environment Variables:** แยก configuration ไว้ใน `.env` และ `env_loader.php`
+- **🛡️ CSRF Protection:** เปิดใช้งาน OAuth state validation และ form tokens
+- **🔒 SSL Verification:** เปิดใช้งาน SSL certificate verification ใน cURL requests
+- **🔍 Input Validation:** เพิ่มการตรวจสอบและ sanitization ของข้อมูล
+- **🌐 CORS Protection:** จำกัด CORS policy ให้ domain ที่ระบุ
+- **📁 File Permissions:** แก้ไข upload directory permissions เป็น 0755
+- **🔄 Session Management:** ปรับปรับ session cookie configuration สำหรับ cross-domain
+
+#### 🛡️ **Vulnerabilities Fixed:**
+- ❌ **Hardcoded Secrets** → ✅ **Environment Variables**
+- ❌ **CSRF Vulnerability** → ✅ **State Validation**
+- ❌ **SSL Verification Disabled** → ✅ **SSL Enabled**
+- ❌ **Wildcard CORS Policy** → ✅ **Domain-Specific CORS**
+- ❌ **Insecure File Permissions** → ✅ **Secure Directory Permissions**
+- ❌ **Missing Input Validation** → ✅ **Comprehensive Validation**
+
+#### 🔧 **Configuration Management:**
+- **`.env` File:** จัดเก็บ database credentials, API keys, และ secrets
+- **`env_loader.php`:** โหลด environment variables และสร้าง constants
+- **`.gitignore`:** ป้องกันการ commit sensitive configuration files
+
+---
+
 ## ⚠️ คู่มือการติดตั้งและสิทธิ์ใช้งาน (Deployment Guide)
 
 1. **Environment Initialization:** คัดลอก `config.php.example` เป็น `config.php` และตั้งค่าการเชื่อมต่อฐานข้อมูลให้ถูกต้อง
 2. **SSO Integration:** โปรเจกต์นี้ทำงานภายใต้ร่มเงาของ **Police Cloud SSO** โปรดตรวจสอบ `CLIENT_ID` และ `CLIENT_SECRET` ให้ตรงกับระบบส่วนกลาง
 3. **Storage Configuration:** ตรวจสอบสิทธิ์การเขียนไฟล์ (Write Permission) ในโฟลเดอร์ `uploads/`, `secure_uploads/` และ `temp_signatures/` (`chmod 755`)
-4. **Security Policy:** ระบบมีกลไก `.gitignore` เพื่อป้องกันไม่ให้คอมมิตไฟล์คอนฟิกและฐานข้อมูลส่วนตัวขึ้นสู่ที่สาธารณะ
+4. **Environment Configuration:** ใช้ไฟล์ `.env` สำหรับจัดเก็บ database credentials, API keys, และ secrets
+5. **Security Policy:** ระบบมีไฟล์ `.env` และ `.gitignore` เพื่อป้องกันการ commit sensitive configuration files

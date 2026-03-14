@@ -733,7 +733,7 @@ endforeach; ?>
             statusEl.textContent = '🔍 กำลังค้นหาข้อมูลจากฐานข้อมูลกำลังพล...';
 
             // Fetch data from API
-            fetch(`api_fetch_cor_officer.php?id_card=${idCard}`)
+            fetch(`api/fetch_cor_officer.php?id_card=${idCard}`)
                 .then(response => response.json())
                 .then(data => {
                     btn.disabled = false;

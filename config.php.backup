@@ -1,0 +1,33 @@
+<?php
+// บังคับความปลอดภัยของ Session Cookie
+session_set_cookie_params([
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// 1. ตั้งค่า Database Local (ของระบบทำบัตร)
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'admportalpte_portal'); // ตรวจสอบชื่อ DB ให้ถูกต้อง
+define('DB_USER', 'admportalpte_Se2jYvApg5');
+
+define('DB_PASS', 'MzZWNBQH23EdaR74ZktZ');
+
+
+define('CLIENT_ID', 'idcard');
+define('CLIENT_SECRET', '236f9f3de583c2091af8c1250f14bdfbe000788f28e79458343975833723b3ec');
+
+// Token Secret สำหร้บการสร้าง Hash แชร์ลิงก์
+define('TOKEN_SECRET', 'WcWFL0XAbH7HAB2ZQ1ErU4DxohHfEX32');
+
+// URL สำหรับให้ Console ส่งค่ากลับมา (ต้องเป็น URL เต็ม)
+define('REDIRECT_URI', 'https://portal.pathumthani.police.go.th/idcard/callback.php');
+
+// ⚠️ แก้ไขจุดนี้: ต้องเป็น URL เต็มเท่านั้น ห้ามใช้ ../
+define('CONSOLE_API_URL', 'https://portal.pathumthani.police.go.th/portal/api/api.php');
+
+?>

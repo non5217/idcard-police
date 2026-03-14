@@ -1,6 +1,6 @@
 <?php
-// idcard/api_admin.php
-require_once 'connect.php';
+// idcard/api/admin/api_admin.php
+require_once '../../connect.php';
 
 // เปิด Session หากยังไม่ได้เปิด
 if (session_status() === PHP_SESSION_NONE) {
@@ -50,7 +50,7 @@ if ($action === 'update_status') {
 
         // ถ้าสถานะอยู่ในกลุ่มที่ต้องพิมพ์บัตร และยังไม่เคยออกเลขบัตรมาก่อน
         if (in_array($status, $eligible_statuses) && empty($old_req['card_sequence'])) {
-            require_once 'helpers.php'; // สำหรับฟังก์ชัน calculateCardExpiry
+            require_once '../../helpers.php'; // สำหรับฟังก์ชัน calculateCardExpiry
 
             $current_year_th = (int)(date('Y') + 543);
 

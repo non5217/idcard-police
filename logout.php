@@ -1,6 +1,6 @@
 <?php
 // idcard/logout.php
-require_once 'config.php'; // โหลด Session + CONSOLE_API_URL
+require_once 'env_loader.php'; // โหลด Session + CONSOLE_API_URL
 
 // ============================================================
 // 1. แจ้ง Portal ให้ Logout (Revoke Server-side Session ด้วย)

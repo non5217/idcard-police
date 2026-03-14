@@ -1,6 +1,20 @@
 <?php
 // idcard/login.php
-require_once 'config.php';
+// บังคับความปลอดภัยของ Session Cookie สำหรับ Cross-Subdomain
+session_set_cookie_params([
+    'lifetime' => 86400, // 24 ชั่วโมง
+    'path' => '/idcard/', // จำกัด path สำหรับ idcard subdirectory
+    'domain' => '.pathumthani.police.go.th', // ให้ทำงานข้าม subdomain
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Lax' // ให้ทำงานข้าม site
+]);
+
+require_once 'env_loader.php'; // Load environment variables
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // ไม่ต้อง session_start() ซ้ำ เพราะ config/connect เปิดให้แล้ว
 
 // 1. เช็คก่อนว่า Login อยู่แล้วหรือเปล่า? (ถ้าเป็น Admin อยู่แล้ว ให้ไปหน้า Dashboard เลย)
@@ -19,7 +33,7 @@ $params = [
     'redirect_uri' => REDIRECT_URI,
     'response_type' => 'code',
     'scope' => 'basic_info',
-    //'state' => $_SESSION['oauth_state'] // 🟢 แนบรหัสลับไปด้วย
+    'state' => $_SESSION['oauth_state'] // 🟢 แนบรหัสลับไปด้วย
 ];
 $login_url = CONSOLE_API_URL . '?' . http_build_query($params);
 

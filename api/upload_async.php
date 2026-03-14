@@ -1,6 +1,6 @@
 <?php
-// idcard/upload_async.php
-require_once 'connect.php';
+// idcard/api/upload_async.php
+require_once '../connect.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 // ป้องกันคนนอกยิง API
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) && !isset($_SESSION['public_access'])) {
 }
 
 // เตรียมโฟลเดอร์รับไฟล์
-$upload_dir = __DIR__ . '/../../secure_uploads/';
+$upload_dir = __DIR__ . '/../../../secure_uploads/';
 if (!file_exists($upload_dir)) mkdir($upload_dir, 0777, true);
 $upload_dir = realpath($upload_dir) . '/';
 

@@ -13,7 +13,8 @@ if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_tok
 if ($_SERVER['REQUEST_METHOD'] !== 'POST')
     die("Invalid Request");
 
-$admin_id = $_SESSION['user_id'];
+$raw_admin_id = $_SESSION['user_id'] ?? 0;
+$admin_id = is_numeric($raw_admin_id) ? (int)$raw_admin_id : 0;
 // 1. รับค่า
 $status = $_POST['status'];
 $rank_id = $_POST['rank_id'];
@@ -69,9 +70,9 @@ $old_card_num = '';
 // 1. ระบุตำแหน่งถอยหลัง 2 ก้าว (โดยยังไม่ใช้ realpath)
 $upload_dir = __DIR__ . '/../../secure_uploads/';
 
-// 2. สร้างโฟลเดอร์หากยังไม่มีอยู่จริง (เปิดสิทธิ์ 0777 ให้ระบบเขียนไฟล์ได้ชัวร์ๆ)
+// 2. สร้างโฟลเดอร์หากยังไม่มีอยู่จริง (เปิดสิทธิ์ 0755 ให้ระบบเขียนไฟล์ได้ชัวร์ๆ)
 if (!file_exists($upload_dir)) {
-    mkdir($upload_dir, 0777, true);
+    mkdir($upload_dir, 0755, true);
 }
 
 // 3. เมื่อมั่นใจว่ามีโฟลเดอร์แล้ว ค่อยจัดฟอร์แมต Path ให้สมบูรณ์

@@ -496,7 +496,7 @@ endif; ?>
                 if (result.isConfirmed) {
                     Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
 
-                    fetch('api_admin.php', {
+                    fetch('api/admin/api_admin.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

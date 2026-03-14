@@ -14,7 +14,10 @@ if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_tok
 }
 
 // 2. รับค่าพื้นฐาน
-$user_id = $_SESSION['user_id'] ?? NULL;
+// 🟢 แก้ไขปัญหา Incorrect integer value (กรองข้อมูล user_id ให้เป็นตัวเลขเท่านั้น)
+$raw_user_id = $_SESSION['user_id'] ?? NULL;
+$user_id = is_numeric($raw_user_id) ? (int)$raw_user_id : NULL;
+$audit_user_id = $user_id ?? 0; // สำหรับตาราง log ที่บังคับไม่ให้เป็น NULL
 $written_at = trim($_POST['written_at']);
 $rank_id = $_POST['rank_id'];
 $first_name = trim($_POST['first_name']);
@@ -84,9 +87,9 @@ elseif ($reason === 'CHANGE') {
 // 1. ระบุตำแหน่งถอยหลัง 2 ก้าว (โดยยังไม่ใช้ realpath)
 $upload_dir = __DIR__ . '/../../secure_uploads/';
 
-// 2. สร้างโฟลเดอร์หากยังไม่มีอยู่จริง (เปิดสิทธิ์ 0777 ให้ระบบเขียนไฟล์ได้ชัวร์ๆ)
+// 2. สร้างโฟลเดอร์หากยังไม่มีอยู่จริง (เปิดสิทธิ์ 0755 ให้ระบบเขียนไฟล์ได้ชัวร์ๆ)
 if (!file_exists($upload_dir)) {
-    mkdir($upload_dir, 0777, true);
+    mkdir($upload_dir, 0755, true);
 }
 
 // 3. เมื่อมั่นใจว่ามีโฟลเดอร์แล้ว ค่อยจัดฟอร์แมต Path ให้สมบูรณ์
@@ -223,7 +226,7 @@ try {
         ]);
 
         $conn->prepare("INSERT INTO idcard_audit_logs (user_id, action, details, ip_address) VALUES (?, 'EDIT_REQUEST', ?, ?)")
-            ->execute([$user_id ?? 0, "แก้ไขคำขอ: $full_name", $_SERVER['REMOTE_ADDR']]);
+            ->execute([$audit_user_id, "แก้ไขคำขอ: $full_name", $_SERVER['REMOTE_ADDR']]);
 
         // 🔔 ส่งแจ้งเตือน (กรณีแก้ไข)
         sendIDCardNotification($conn, $edit_id);
@@ -248,11 +251,13 @@ try {
             $issuer_id, $inspector_id, $current_year_th
         ]);
 
-        $conn->prepare("INSERT INTO idcard_audit_logs (user_id, action, details, ip_address) VALUES (?, 'SUBMIT_REQUEST', ?, ?)")
-            ->execute([$user_id ?? 0, "ยื่นคำขอใหม่: $full_name", $_SERVER['REMOTE_ADDR']]);
-
-        // 🔔 ส่งแจ้งเตือน (กรณียื่นใหม่)
+                // 🔔 ส่งแจ้งเตือน (กรณียื่นใหม่)
         $new_id = $conn->lastInsertId();
+        
+        $conn->prepare("INSERT INTO idcard_audit_logs (user_id, action, details, ip_address) VALUES (?, 'SUBMIT_REQUEST', ?, ?)")
+            ->execute([$audit_user_id, "ยื่นคำขอใหม่: $full_name", $_SERVER['REMOTE_ADDR']]);
+
+
         sendIDCardNotification($conn, $new_id);
     }
 

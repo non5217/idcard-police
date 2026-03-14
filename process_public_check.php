@@ -1,6 +1,7 @@
 <?php
 // idcard/process_public_check.php
 require_once 'connect.php';
+require_once 'env_loader.php'; // Load environment variables
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -35,11 +36,11 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_card = trim($_POST['id_card_number']);
-    $phone = trim($_POST['phone_number']); // 🆕 รับเบอร์โทร
+    $phone = trim($_POST['phone_number']); // รับเบอร์โทร
     $action = $_POST['action_type']; // 'REQUEST' หรือ 'TRACK'
 
-    // 🟢 1. โค้ดตรวจสอบ Cloudflare Turnstile ด้วย cURL
-    $turnstile_secret = "0x4AAAAAACpD9APctJNBwReyD4sd5eTO8Ak"; // Testing Key (Always passes) — เปลี่ยนเป็น Production Key ตอน Deploy
+    // 1. โค้ดตรวจสอบ Cloudflare Turnstile ด้วย cURL
+    $turnstile_secret = TURNSTILE_SECRET; // Load from environment variables
     $turnstile_response = $_POST['cf-turnstile-response'] ?? '';
 
     // ใช้ cURL ยิงข้อมูลไปถาม Cloudflare
@@ -52,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'remoteip' => $_SERVER['REMOTE_ADDR']
     ]));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
     $response = curl_exec($ch);
     $curl_error = curl_error($ch);

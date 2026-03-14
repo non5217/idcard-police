@@ -114,7 +114,7 @@ if (in_array($status, $eligible_statuses)) {
 // 7. จัดการไฟล์รูป/ลายเซ็น (ถ้ามีการอัปโหลดใหม่จาก Admin ให้เก็บเข้า secure_uploads)
 $upload_dir = __DIR__ . '/../../secure_uploads/';
 if (!file_exists($upload_dir))
-    mkdir($upload_dir, 0777, true);
+    mkdir($upload_dir, 0755, true);
 $upload_dir = realpath($upload_dir) . '/';
 
 $raw_id = $_POST['id_card_number'] ?? '';

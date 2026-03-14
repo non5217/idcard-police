@@ -1221,7 +1221,7 @@ endif; ?>
                 reader.onload = function (evt) {
                     const formData = new FormData();
                     formData.append('file_b64', evt.target.result); formData.append('file_name', file.name);
-                    fetch('upload_async.php', { method: 'POST', body: formData })
+                    fetch('api/upload_async.php', { method: 'POST', body: formData })
                         .then(res => res.json())
                         .then(data => {
                             input.disabled = false; uploadsInProgress--;

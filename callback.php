@@ -1,6 +1,21 @@
 <?php
 // idcard/callback.php
-require_once 'connect.php'; // ❌ ไม่ต้อง session_start()
+// บังคับความปลอดภัยของ Session Cookie สำหรับ Cross-Subdomain
+session_set_cookie_params([
+    'lifetime' => 86400, // 24 ชั่วโมง
+    'path' => '/idcard/', // จำกัด path สำหรับ idcard subdirectory
+    'domain' => '.pathumthani.police.go.th', // ให้ทำงานข้าม subdomain
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Lax' // ให้ทำงานข้าม site
+]);
+
+require_once 'connect.php';
+require_once 'env_loader.php'; // Load environment variables
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // 1. ตรวจสอบว่ามี Code ส่งมาไหม
 if (!isset($_GET['code'])) {
@@ -8,10 +23,10 @@ if (!isset($_GET['code'])) {
 }
 
 // 🟢 1.5 ตรวจสอบ State เพื่อป้องกัน Login CSRF Attack
-//if (!isset($_GET['state']) || $_GET['state'] !== $_SESSION['oauth_state']) {
-//    die("⛔ Security Error: ตรวจพบการโจมตีแบบ CSRF (รหัส State ไม่ตรงกัน)");
-//}
-//unset($_SESSION['oauth_state']); // ใช้เสร็จแล้วลบทิ้งทันที
+if (!isset($_GET['state']) || $_GET['state'] !== $_SESSION['oauth_state']) {
+    die("⛔ Security Error: ตรวจพบการโจมตีแบบ CSRF (รหัส State ไม่ตรงกัน)");
+}
+unset($_SESSION['oauth_state']); // ใช้เสร็จแล้วลบทิ้งทันที
 $code = $_GET['code'];
 
 // 2. เตรียมแลก Token
@@ -31,10 +46,6 @@ curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-// ⚠️ เพิ่ม 2 บรรทัดนี้เพื่อแก้ปัญหา SSL (เฉพาะกิจ)
-#curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-#curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-// ⚠️ เพิ่ม 2 บรรทัดนี้เพื่อแก้ปัญหา SSL (เฉพาะกิจ)
 $response = curl_exec($ch);
 
 // ⚠️ เช็ค Error ของ cURL โดยตรง
@@ -62,8 +73,6 @@ $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $user_info_url);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer " . $access_token]);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ⚠️ ปิด SSL ตรงนี้ด้วย
-//curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);     // ⚠️ ปิด SSL ตรงนี้ด้วย
 $user_json = curl_exec($ch);
 curl_close($ch);
 

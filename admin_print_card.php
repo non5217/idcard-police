@@ -83,7 +83,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
 }
 // =========================================================
 
-$id = $_GET['id'] ?? 0;
+$id = (int)($_GET['id'] ?? 0);
+if ($id <= 0) {
+    die("Error: Invalid request ID");
+}
 
 $sql = "SELECT r.*, k.rank_name, o.org_name, t.type_name,
                iss.rank_name as issuer_rank, iss.full_name as issuer_name, iss.position as issuer_pos, iss.signature_path as issuer_sig,
@@ -672,7 +675,7 @@ if (empty($inspector_sig_path) || !file_exists($inspector_sig_path)) {
                             didOpen: () => { Swal.showLoading(); }
                         });
 
-                        fetch('api_admin.php', {
+                        fetch('api/admin/api_admin.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -686,7 +689,7 @@ if (empty($inspector_sig_path) || !file_exists($inspector_sig_path)) {
                         .then(data => {
                             if(data.success) {
                                 // 🟢 บวกแต้มการพิมพ์
-                                fetch('api_admin.php', {
+                                fetch('api/admin/api_admin.php', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ action: 'increment_print_count', id: <?= $id ?> })

@@ -129,6 +129,7 @@ $current_date_th = date('d') . ' / ' . date('m') . ' / ' . (date('Y') + 543);
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -248,6 +249,8 @@ $current_date_th = date('d') . ' / ' . date('m') . ' / ' . (date('Y') + 543);
                 class="p-4 md:p-8 space-y-6 md:space-y-8 pb-32 md:pb-8" id="requestForm">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                 <input type="hidden" name="edit_request_id" value="<?= $is_edit ? $_SESSION['edit_request_id'] : ''?>">
+                <?php $mobile_sig_id = bin2hex(random_bytes(16)); ?>
+                <input type="hidden" id="mobile_sig_id" value="<?= $mobile_sig_id?>">
 
                 <div class="bg-gray-50 p-4 rounded border">
                     <h3 class="font-bold text-lg text-gray-700 border-b pb-2 mb-4">1. ข้อมูลทั่วไป</h3>
@@ -274,7 +277,7 @@ $current_date_th = date('d') . ' / ' . date('m') . ' / ' . (date('Y') + 543);
                                 <?php foreach ($rank_sort_order as $rid):
     if (isset($ranks_by_id[$rid])):
         $r = $ranks_by_id[$rid]; ?>
-                                <option value="<?= $r['id']?>" <?= val('rank_id') == $r['id'] ? 'selected' : ''?>>
+                                <option value="<?= $r['id']?>" <?=val('rank_id')==$r['id'] ? 'selected' : '' ?>>
                                     <?= $r['rank_name']?>
                                 </option>
                                 <?php
@@ -316,7 +319,7 @@ endforeach; ?>
                             <select name="blood_type" required class="input-field">
                                 <option value="">-- เลือก --</option>
                                 <?php foreach (['O', 'A', 'B', 'AB'] as $b): ?>
-                                <option value="<?= $b?>" <?= val('blood_type') == $b ? 'selected' : ''?>>
+                                <option value="<?= $b?>" <?=val('blood_type')==$b ? 'selected' : '' ?>>
                                     <?= $b?>
                                 </option>
                                 <?php
@@ -389,13 +392,13 @@ endforeach; ?>
                     <div class="mb-4">
                         <label class="inline-flex items-center">
                             <input type="radio" name="contact_address_type" value="SAME"
-                                <?= val('contact_address_type', 'SAME') == 'SAME' ? 'checked' : ''?>
+                                <?=val('contact_address_type', 'SAME' )=='SAME' ? 'checked' : '' ?>
                             onchange="toggleContactAddress()" class="form-radio text-blue-600">
                             <span class="ml-2">เหมือนที่อยู่ตามทะเบียนบ้าน</span>
                         </label>
                         <label class="inline-flex items-center ml-6">
                             <input type="radio" name="contact_address_type" value="OTHER"
-                                <?= val('contact_address_type') == 'OTHER' ? 'checked' : ''?>
+                                <?=val('contact_address_type')=='OTHER' ? 'checked' : '' ?>
                             onchange="toggleContactAddress()" class="form-radio text-blue-600">
                             <span class="ml-2">ที่อยู่อื่น</span>
                         </label>
@@ -415,7 +418,7 @@ endforeach; ?>
                             <select name="card_type_id" required class="input-field">
                                 <option value="">-- เลือกประเภทบัตร --</option>
                                 <?php foreach ($card_types as $ct): ?>
-                                <option value="<?= $ct['id']?>" <?= val('card_type_id') == $ct['id'] ? 'selected' : ''?>>
+                                <option value="<?= $ct['id']?>" <?=val('card_type_id')==$ct['id'] ? 'selected' : '' ?>>
                                     <?= $ct['type_name']?>
                                 </option>
                                 <?php
@@ -425,11 +428,11 @@ endforeach; ?>
                         <div>
                             <label class="label">ประเภทเจ้าหน้าที่ <span class="text-red-500">*</span></label>
                             <select name="officer_type" required class="input-field">
-                                <option value="POLICE" <?= val('officer_type') == 'POLICE' ? 'selected' : ''?>
+                                <option value="POLICE" <?=val('officer_type')=='POLICE' ? 'selected' : '' ?>
                                     >ข้าราชการตำรวจ</option>
-                                <option value="PERMANENT_EMP" <?= val('officer_type') == 'PERMANENT_EMP' ? 'selected' : ''
-    ?>>ลูกจ้างประจำ</option>
-                                <option value="GOV_EMP" <?= val('officer_type') == 'GOV_EMP' ? 'selected' : ''?>
+                                <option value="PERMANENT_EMP" <?=val('officer_type')=='PERMANENT_EMP' ? 'selected' : ''
+                                    ?>>ลูกจ้างประจำ</option>
+                                <option value="GOV_EMP" <?=val('officer_type')=='GOV_EMP' ? 'selected' : '' ?>
                                     >พนักงานราชการ</option>
                             </select>
                         </div>
@@ -466,7 +469,7 @@ endforeach; ?>
                             <select name="org_id" class="input-field">
                                 <option value="">-- เลือกสังกัด --</option>
                                 <?php foreach ($orgs as $o): ?>
-                                <option value="<?= $o['id']?>" <?= val('org_id') == $o['id'] ? 'selected' : ''?>>
+                                <option value="<?= $o['id']?>" <?=val('org_id')==$o['id'] ? 'selected' : '' ?>>
                                     <?= $o['org_name']?>
                                 </option>
                                 <?php
@@ -491,12 +494,13 @@ endforeach; ?>
                 </div>
 
                 <div class="bg-yellow-50 p-4 rounded border border-yellow-200">
-                    <h3 class="section-title">6. เหตุผลของการขอบัตร (หากเลือกไม่ถูกต้อง คำขอจะถูกปฏิเสธ)<span class="text-red-500">*</span></h3>
+                    <h3 class="section-title">6. เหตุผลของการขอบัตร (หากเลือกไม่ถูกต้อง คำขอจะถูกปฏิเสธ)<span
+                            class="text-red-500">*</span></h3>
 
                     <div class="mb-2">
                         <label class="inline-flex items-center font-bold">
-                            <input type="radio" name="request_reason" value="FIRST" <?= val('request_reason') == 'FIRST'
-    ? 'checked' : ''?> onclick="toggleReason(); updateRequiredDocs();" required
+                            <input type="radio" name="request_reason" value="FIRST" <?=val('request_reason')=='FIRST'
+                                ? 'checked' : '' ?> onclick="toggleReason(); updateRequiredDocs();" required
                             class="form-radio h-5 w-5 text-blue-600">
                             <span class="ml-2">1. ขอมีบัตรครั้งแรก (ไม่เคยมีบัตรข้าราชการมาก่อน)</span>
                         </label>
@@ -504,19 +508,19 @@ endforeach; ?>
 
                     <div class="mb-2">
                         <label class="inline-flex items-center font-bold">
-                            <input type="radio" name="request_reason" value="NEW" <?= val('request_reason') == 'NEW'
-    ? 'checked' : ''?> onclick="toggleReason(); updateRequiredDocs();" required
+                            <input type="radio" name="request_reason" value="NEW" <?=val('request_reason')=='NEW'
+                                ? 'checked' : '' ?> onclick="toggleReason(); updateRequiredDocs();" required
                             class="form-radio h-5 w-5 text-blue-600">
                             <span class="ml-2">2. ขอมีบัตรใหม่ เนื่องจาก</span>
                         </label>
                         <div class="ml-8 mt-1 space-y-2 hidden" id="reason_new_options">
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="EXPIRED" <?= val('request_reason_detail') == 'EXPIRED' ? 'checked' : ''?>
+                                    value="EXPIRED" <?=val('request_reason_detail')=='EXPIRED' ? 'checked' : '' ?>
                                 onclick="checkCardWarning(this); updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">บัตรหมดอายุ</span></label>
                             <label class="inline-flex items-center ml-4"><input type="radio"
-                                    name="request_reason_detail" value="LOST" <?= val('request_reason_detail') == 'LOST'
-    ? 'checked' : ''?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    name="request_reason_detail" value="LOST" <?=val('request_reason_detail')=='LOST'
+                                    ? 'checked' : '' ?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">บัตรหาย/ถูกทำลาย</span></label>
                             <div class="mt-2"><label class="text-xs text-gray-600 block mb-1">ระบุเลขทะเบียนบัตรเดิม
                                     (ถ้ามี)</label><input type="text" name="old_card_number"
@@ -527,39 +531,39 @@ endforeach; ?>
 
                     <div class="mb-2">
                         <label class="inline-flex items-center font-bold">
-                            <input type="radio" name="request_reason" value="CHANGE" <?= val('request_reason') == 'CHANGE'
-    ? 'checked' : ''?> onclick="toggleReason(); updateRequiredDocs();" required
+                            <input type="radio" name="request_reason" value="CHANGE" <?=val('request_reason')=='CHANGE'
+                                ? 'checked' : '' ?> onclick="toggleReason(); updateRequiredDocs();" required
                             class="form-radio h-5 w-5 text-blue-600">
                             <span class="ml-2">3. ขอเปลี่ยนบัตร เนื่องจาก</span>
                         </label>
                         <div class="ml-8 mt-1 grid grid-cols-1 md:grid-cols-2 gap-2 hidden" id="reason_change_options">
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_POS" <?= val('request_reason_detail') == 'CHANGE_POS' ? 'checked' : ''?>
+                                    value="CHANGE_POS" <?=val('request_reason_detail')=='CHANGE_POS' ? 'checked' : '' ?>
                                 onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เลื่อนยศ/ตำแหน่ง</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_NAME" <?= val('request_reason_detail') == 'CHANGE_NAME' ? 'checked' : ''
-    ?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    value="CHANGE_NAME" <?=val('request_reason_detail')=='CHANGE_NAME' ? 'checked' : ''
+                                    ?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เปลี่ยนชื่อตัว</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_SURNAME" <?= val('request_reason_detail') == 'CHANGE_SURNAME' ? 'checked'
-    : ''?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    value="CHANGE_SURNAME" <?=val('request_reason_detail')=='CHANGE_SURNAME' ? 'checked'
+                                    : '' ?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เปลี่ยนชื่อสกุล</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="CHANGE_BOTH" <?= val('request_reason_detail') == 'CHANGE_BOTH' ? 'checked' : ''
-    ?> onclick="updateRequiredDocs();" class="form-radio"><span
+                                    value="CHANGE_BOTH" <?=val('request_reason_detail')=='CHANGE_BOTH' ? 'checked' : ''
+                                    ?> onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เปลี่ยนชื่อและสกุล</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="DAMAGED" <?= val('request_reason_detail') == 'DAMAGED' ? 'checked' : ''?>
+                                    value="DAMAGED" <?=val('request_reason_detail')=='DAMAGED' ? 'checked' : '' ?>
                                 onclick="checkCardWarning(this); updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">ชำรุด</span></label>
                             <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                    value="RETIRED" <?= val('request_reason_detail') == 'RETIRED' ? 'checked' : ''?>
+                                    value="RETIRED" <?=val('request_reason_detail')=='RETIRED' ? 'checked' : '' ?>
                                 onclick="updateRequiredDocs();" class="form-radio"><span
                                     class="ml-2">เกษียณ</span></label>
                             <div class="col-span-2 flex items-center">
                                 <label class="inline-flex items-center"><input type="radio" name="request_reason_detail"
-                                        value="OTHER" <?= val('request_reason_detail') == 'OTHER' ? 'checked' : ''?>
+                                        value="OTHER" <?=val('request_reason_detail')=='OTHER' ? 'checked' : '' ?>
                                     onclick="updateRequiredDocs();" class="form-radio"><span
                                         class="ml-2 whitespace-nowrap mr-2">อื่นๆ</span></label>
                                 <input type="text" name="request_reason_other" value="<?= val('request_reason_other')?>"
@@ -718,29 +722,52 @@ endif; ?>
                     <div class="flex justify-center gap-6 mb-4">
                         <label
                             class="inline-flex items-center cursor-pointer bg-white px-4 py-2 rounded-lg border shadow-sm hover:bg-gray-50 transition">
-                            <input type="radio" name="sig_method" value="draw" onchange="toggleSigMethod()"
+                            <input type="radio" name="sig_method" value="draw" checked onchange="toggleSigMethod()"
                                 class="form-radio text-blue-600 w-5 h-5">
                             <span class="ml-2 font-bold text-gray-700"><i class="fas fa-pen-nib text-blue-600"></i>
                                 เซ็นชื่อสดหน้าจอ</span>
                         </label>
                         <label
                             class="inline-flex items-center cursor-pointer bg-white px-4 py-2 rounded-lg border shadow-sm hover:bg-gray-50 transition">
-                            <input type="radio" name="sig_method" value="upload" checked onchange="toggleSigMethod()"
+                            <input type="radio" name="sig_method" value="upload" onchange="toggleSigMethod()"
                                 class="form-radio text-blue-600 w-5 h-5">
                             <span class="ml-2 font-bold text-gray-700"><i class="fas fa-file-image text-green-600"></i>
                                 อัปโหลด / ใช้ลายเซ็นเดิม</span>
                         </label>
                     </div>
 
-                    <div id="sig_panel_draw" class="hidden flex flex-col items-center">
-                        <div class="border-2 border-dashed border-gray-400 rounded-lg bg-white shadow-inner">
-                            <canvas id="signature-pad" width="400" height="200" class="cursor-crosshair"></canvas>
+                    <div id="sig_panel_draw" class="flex flex-col items-center">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 w-full max-w-4xl">
+                            <!-- Canvas Section -->
+                            <div class="md:col-span-8 flex flex-col items-center">
+                                <div
+                                    class="w-full border-2 border-dashed border-gray-300 rounded-xl bg-white shadow-inner p-2">
+                                    <div class="flex justify-between items-center mb-2 px-2">
+                                        <span class="text-sm font-bold text-gray-700"><i
+                                                class="fas fa-mouse-pointer mr-1"></i> เซ็นบนรูปนี้ (คอมพิวเตอร์)</span>
+                                        <div class="text-xs text-red-600 cursor-pointer underline hover:text-red-800"
+                                            id="clear-sig">ล้างลายเซ็น</div>
+                                    </div>
+                                    <canvas id="signature-pad" width="500" height="250"
+                                        class="cursor-crosshair w-full bg-gray-50 rounded-lg"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Mobile QR Section -->
+                            <div
+                                class="md:col-span-4 flex flex-col items-center justify-center p-4 bg-blue-50 rounded-xl border border-blue-100 shadow-sm">
+                                <h4 class="font-bold text-blue-800 mb-3 text-sm"><i class="fas fa-mobile-alt mr-1"></i>
+                                    หรือเซ็นผ่านมือถือ</h4>
+                                <div id="qrcode" class="bg-white p-2 rounded-lg shadow-sm mb-3"></div>
+                                <div class="text-[10px] text-gray-500 mb-3">สแกนเพื่อเซ็นชื่อบนจอมือถือ</div>
+                                <div class="text-xs text-blue-600 font-bold animate-pulse" id="polling_status">
+                                    <i class="fas fa-spinner fa-spin mr-1"></i> รอข้อมูลจากมือถือ...
+                                </div>
+                            </div>
                         </div>
-                        <div class="mt-2 text-sm text-red-600 cursor-pointer underline hover:text-red-800"
-                            id="clear-sig">ล้างลายเซ็น</div>
                     </div>
 
-                    <div id="sig_panel_upload" class="flex flex-col items-center w-full">
+                    <div id="sig_panel_upload" class="hidden flex flex-col items-center w-full">
                         <div class="bg-gray-50 p-4 rounded border border-gray-200 w-full max-w-md mb-4">
                             <div class="flex items-center justify-center gap-3 mb-3">
                                 <div
@@ -844,8 +871,8 @@ endif; ?>
     </div>
 
     <script>
-        const maxUploadBytes = <?= $max_bytes?>;
-        const maxUploadMB = <?= $max_mb?>;
+        const maxUploadBytes = <?= $max_bytes ?>;
+        const maxUploadMB = <?= $max_mb ?>;
 
         // --- Address & Date ---
         $(document).ready(function () {
@@ -895,7 +922,7 @@ endif; ?>
         // --- Awesomplete ---
         const posInput = document.getElementById('position_input');
         const orgSelect = document.querySelector('select[name="org_id"]');
-        const posAutoMap = <?= $pos_auto_map_json?>;
+        const posAutoMap = <?= $pos_auto_map_json ?>;
 
         if (posInput && orgSelect) {
             const awesomplete = new Awesomplete(posInput, { list: "#pos_list", minChars: 0, maxItems: 15, autoFirst: true });
@@ -946,7 +973,23 @@ endif; ?>
 
         // --- ลายเซ็น (Threshold) ---
         var sigCanvasDraw = document.getElementById('signature-pad');
-        var signaturePad = new SignaturePad(sigCanvasDraw);
+        var signaturePad = new SignaturePad(sigCanvasDraw, {
+            backgroundColor: 'rgba(255, 255, 255, 0)',
+            penColor: 'rgb(0, 0, 0)',
+            minWidth: 2.5,
+            maxWidth: 6
+        });
+
+        function resizeSigCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            sigCanvasDraw.width = sigCanvasDraw.offsetWidth * ratio;
+            sigCanvasDraw.height = sigCanvasDraw.offsetHeight * ratio;
+            sigCanvasDraw.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear(); // Always clear to reset offset properly
+        }
+
+        window.addEventListener("resize", resizeSigCanvas);
+
         document.getElementById('clear-sig').addEventListener('click', () => signaturePad.clear());
 
         function toggleSigMethod() {
@@ -954,9 +997,81 @@ endif; ?>
             if (method === 'draw') {
                 document.getElementById('sig_panel_draw').classList.remove('hidden');
                 document.getElementById('sig_panel_upload').classList.add('hidden');
+                setTimeout(resizeSigCanvas, 10); // Sync canvas size after panel is visible
+                generateMobileSigQR(); // Auto show QR and start polling
             } else {
                 document.getElementById('sig_panel_draw').classList.add('hidden');
                 document.getElementById('sig_panel_upload').classList.remove('hidden');
+                stopPolling();
+            }
+        }
+
+        // --- 📱 Mobile Signature QR & Polling ---
+        let pollingInterval = null;
+        function generateMobileSigQR() {
+            const sid = document.getElementById('mobile_sig_id').value;
+            const protocol = window.location.protocol;
+            const host = window.location.host;
+            const path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+            const mobileUrl = `${protocol}//${host}${path}/mobile_sig.php?sid=${sid}`;
+
+            // Clear existing QR
+            const qrContainer = document.getElementById('qrcode');
+            if (qrContainer) {
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
+                    text: mobileUrl,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#003366",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+            startPolling(sid);
+        }
+
+        function startPolling(sid) {
+            stopPolling();
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`api/get_mobile_sig.php?sig_id=${sid}`);
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        // Got the signature!
+                        const sigData = result.sig_data;
+
+                        // Set to Upload method and update preview
+                        document.querySelector('input[name="sig_method"][value="upload"]').checked = true;
+                        toggleSigMethod();
+
+                        document.getElementById('sig_preview').src = sigData;
+                        document.getElementById('sig_preview').classList.remove('hidden');
+                        document.getElementById('sig_placeholder').classList.add('hidden');
+                        document.getElementById('signature_data').value = sigData;
+
+                        stopPolling();
+                        document.getElementById('mobileSigModal').classList.add('hidden');
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'รับลายเซ็นสำเร็จ!',
+                            text: 'ลายเซ็นเข้าหน้าเว็บเรียบร้อยแล้วครับ',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 3000);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
             }
         }
 
@@ -1129,7 +1244,7 @@ endif; ?>
         document.getElementById('requestForm').addEventListener('submit', function (e) {
             if (uploadsInProgress > 0) { e.preventDefault(); Swal.fire('รอสักครู่', 'มีไฟล์กำลังอัปโหลดอยู่ กรุณารอให้อัปโหลดเสร็จทุกไฟล์ก่อนกดยืนยันครับ', 'warning'); return; }
 
-            let isEditMode = <?= $is_edit ? 'true' : 'false'?>;
+            let isEditMode = <?= $is_edit ? 'true' : 'false' ?>;
             let sigMethod = document.querySelector('input[name="sig_method"]:checked').value;
             let croppedPhoto = document.getElementById('cropped_photo_data').value;
             let processedSig = document.getElementById('signature_data').value;
@@ -1197,6 +1312,11 @@ endif; ?>
             if (document.querySelector('input[name="contact_address_type"]:checked').value === 'OTHER') {
                 if (!document.getElementById('contact_address_detail').value.trim()) { e.preventDefault(); Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุที่อยู่ติดต่อ', 'warning'); }
             }
+        });
+
+        // Initialize default signature method on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleSigMethod();
         });
     </script>
 </body>

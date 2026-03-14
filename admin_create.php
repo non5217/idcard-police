@@ -113,7 +113,7 @@ $issue_db = date('Y-m-d');
                         <label class="block text-sm font-bold">สถานะ</label>
                         <select name="status" class="w-full border p-2 rounded bg-white">
                             <option value="PENDING_CHECK" selected>รอตรวจสอบ (ยังไม่ออกเลข)</option>
-                            <option value="SENT_TO_PRINT">รอพิมพ์บัตร (ออกเลขทันที)</option>
+                            <option value="SENT_TO_PRINT">ส่งพิมพ์บัตร (ออกเลขทันที)</option>
                             <option value="COMPLETED">รับบัตรแล้ว (จบงาน) - ใช้กรณีคีย์ประวัติย้อนหลัง</option>
                         </select>
                         <p class="text-xs text-blue-600 mt-1">* หากเลือก "รอพิมพ์บัตร" หรือ "รับบัตรแล้ว"
@@ -123,21 +123,42 @@ $issue_db = date('Y-m-d');
             </div>
 
             <h3 class="font-bold border-b pb-2 text-gray-700">ข้อมูลส่วนตัว</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-blue-900"><i class="fas fa-id-card mr-1"></i> เลขบัตร
+                        ปชช.</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="id_card_number" id="id_card_input" maxlength="13" inputmode="numeric"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                            class="w-full border-2 border-blue-100 p-2 rounded-lg bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold text-lg"
+                            placeholder="กรอกเลขบัตรประชาชน 13 หลัก" required>
+                        <button type="button" id="fetch_cor_btn" onclick="fetchCorOfficerData()"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold whitespace-nowrap flex items-center gap-2 transition-all">
+                            <i class="fas fa-link"></i> เชื่อมฐานข้อมูลกำลังพล
+                        </button>
+                    </div>
+                    <p id="id_card_error" class="text-xs text-red-500 mt-1 hidden font-bold">❌ เลขบัตรประชาชนไม่ถูกต้อง
+                    </p>
+                    <p id="cor_fetch_status" class="text-xs mt-1 hidden"></p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-bold">ยศ</label>
-                    <select name="rank_id" class="w-full border p-2 rounded bg-white" required>
-                        <option value="">- เลือกยศ -</option>
+                    <input type="text" name="rank_name_input" id="rank_input" class="w-full border p-2 rounded bg-white" placeholder="- พิมพ์เพื่อค้นหายศ -" autocomplete="off" required>
+                    <input type="hidden" name="rank_id" id="rank_id_hidden">
+                    <datalist id="rank_list">
                         <?php foreach ($rank_sort_order as $rid):
-    if (isset($ranks_by_id[$rid])):
-        $r = $ranks_by_id[$rid]; ?>
-                        <option value="<?= $r['id']?>">
-                            <?= $r['rank_name']?>
-                        </option>
-                        <?php
-    endif;
-endforeach; ?>
-                    </select>
+                            if (isset($ranks_by_id[$rid])):
+                                $r = $ranks_by_id[$rid]; ?>
+                                <option data-id="<?= $r['id'] ?>" value="<?= htmlspecialchars($r['rank_name']) ?>">
+                                    <?= htmlspecialchars($r['rank_name']) ?>
+                                </option>
+                            <?php
+                            endif;
+                        endforeach; ?>
+                    </datalist>
                 </div>
                 <div><label class="block text-sm font-bold">ชื่อ (ไม่มีคำนำหน้า)</label><input type="text"
                         name="first_name" class="w-full border p-2 rounded bg-white" required></div>
@@ -153,14 +174,6 @@ endforeach; ?>
                         required>
                     <input type="hidden" name="birth_date" id="create_birth_date_db">
                 </div>
-                <div>
-                    <label class="block text-sm font-bold">เลขบัตร ปชช.</label>
-                    <input type="text" name="id_card_number" id="id_card_input" maxlength="13" inputmode="numeric"
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                        class="w-full border p-2 rounded bg-white" required>
-                    <p id="id_card_error" class="text-xs text-red-500 mt-1 hidden font-bold">❌ เลขบัตรประชาชนไม่ถูกต้อง
-                    </p>
-                </div>
                 <div><label class="block text-sm font-bold">หมู่โลหิต <span class="text-red-500">*</span></label>
                     <select name="blood_type" class="w-full border p-2 rounded bg-white" required>
                         <option value="">- เลือกหมู่โลหิต -</option>
@@ -170,8 +183,8 @@ endforeach; ?>
                         <option value="AB">AB</option>
                     </select>
                 </div>
-                <div><label class="block text-sm font-bold">โทรศัพท์</label><input type="text" name="phone"
-                        class="w-full border p-2 rounded bg-white"></div>
+                <div class="md:col-span-2"><label class="block text-sm font-bold">โทรศัพท์</label><input type="text"
+                        name="phone" class="w-full border p-2 rounded bg-white"></div>
             </div>
 
             <h3 class="font-bold border-b pb-2 text-gray-700 mt-6">ข้อมูลการทำงาน</h3>
@@ -353,46 +366,90 @@ endforeach; ?>
 
     <script>
         // =========================================================
-        // 🟢 ระบบ Auto-fill ตำแหน่ง (รองรับมือถือ 100% ด้วย Awesomplete)
+        // 🟢 ระบบ Auto-fill ตำแหน่ง และ ยศ (ด้วย Awesomplete)
         // =========================================================
         $(document).ready(function () {
             const posInput = document.getElementById('position_input');
             const orgSelect = document.querySelector('select[name="org_id"]');
-            const posAutoMap = <?= $pos_auto_map_json ?>;
+            const posAutoMap = <?= $pos_auto_map_json?>;
 
-            // 1. ผูกข้อมูล Datalist เข้ากับ Input
-            const awesomplete = new Awesomplete(posInput, {
+            // --- Awesomplete สำหรับตำแหน่ง ---
+            const posAwesomplete = new Awesomplete(posInput, {
                 list: "#pos_list",
                 minChars: 0,
                 maxItems: 15,
                 autoFirst: true
             });
 
-            // 2. คลิกที่ช่องปุ๊บ ให้โชว์ Dropdown เลย (เหมือน Select ปกติ)
             posInput.addEventListener("click", function () {
-                if (awesomplete.ul.childNodes.length === 0) {
-                    awesomplete.minChars = 0;
-                    awesomplete.evaluate();
-                } else if (awesomplete.ul.hasAttribute('hidden')) {
-                    awesomplete.open();
+                if (posAwesomplete.ul.childNodes.length === 0) {
+                    posAwesomplete.minChars = 0;
+                    posAwesomplete.evaluate();
+                } else if (posAwesomplete.ul.hasAttribute('hidden')) {
+                    posAwesomplete.open();
                 } else {
-                    awesomplete.close();
+                    posAwesomplete.close();
                 }
             });
 
-            // 3. เมื่อเลือกหรือพิมพ์ตำแหน่ง ให้ Auto-fill สังกัด
-            function triggerAutoFill(val) {
+            window.triggerAutoFill = function(val) {
                 if (val && posAutoMap[val]) {
                     orgSelect.value = posAutoMap[val];
                 }
-            }
+            };
 
             posInput.addEventListener('input', function () {
-                triggerAutoFill(this.value.trim());
+                window.triggerAutoFill(this.value.trim());
             });
 
             posInput.addEventListener('awesomplete-selectcomplete', function (e) {
-                triggerAutoFill(e.text.value);
+                window.triggerAutoFill(e.text.value);
+            });
+
+            // --- Awesomplete สำหรับยศ ---
+            const rankInput = document.getElementById('rank_input');
+            const rankIdHidden = document.getElementById('rank_id_hidden');
+            const rankListOptions = Array.from(document.querySelectorAll('#rank_list option')).map(opt => ({
+                label: opt.value,
+                value: opt.getAttribute('data-id')
+            }));
+
+            const rankAwesomplete = new Awesomplete(rankInput, {
+                list: "#rank_list",
+                minChars: 0,
+                maxItems: 20,
+                autoFirst: true
+            });
+
+            rankInput.addEventListener("click", function () {
+                if (rankAwesomplete.ul.childNodes.length === 0) {
+                    rankAwesomplete.minChars = 0;
+                    rankAwesomplete.evaluate();
+                } else if (rankAwesomplete.ul.hasAttribute('hidden')) {
+                    rankAwesomplete.open();
+                } else {
+                    rankAwesomplete.close();
+                }
+            });
+
+            // ฟังก์ชันค้นหา ID ของยศจากชื่อยศ
+            window.rankListOptions = rankListOptions;
+            window.syncRankId = function(name) {
+                const match = window.rankListOptions.find(r => r.label === name.trim());
+                if (match) {
+                    rankIdHidden.value = match.value;
+                } else {
+                    rankIdHidden.value = ''; // หรือจะกำหนดเป็น 0/null สำหรับยศใหม่
+                }
+            };
+
+            rankInput.addEventListener('input', function () {
+                syncRankId(this.value);
+            });
+
+            rankInput.addEventListener('awesomplete-selectcomplete', function (e) {
+                rankIdHidden.value = e.text.value; // Awesomplete-selectcomplete ส่งค่า value มาให้ (คือ rank_id)
+                rankInput.value = e.text.label; // แล้วแก้หน้าจอให้เป็น label
             });
 
             // ================= Date Logic =================
@@ -408,7 +465,7 @@ endforeach; ?>
                 } return '';
             }
 
-            function autoCalcExpiry() {
+            window.autoCalcExpiry = function() {
                 if ($('#is_lifetime').is(':checked')) return;
 
                 let dobStr = $('#create_birth_date_db').val();
@@ -450,15 +507,15 @@ endforeach; ?>
                 $('#expire_date_db').val(`${exY}-${exM}-${exD}`);
                 $('#expire_date_th').val(`${exD}/${exM}/${exY + 543}`).addClass('border-green-400 border-2');
                 setTimeout(() => $('#expire_date_th').removeClass('border-green-400 border-2'), 1000);
-            }
+            };
 
             $('#create_birth_date_th').on('change blur keyup', function () {
                 $('#create_birth_date_db').val(convertToDBDate($(this).val()));
-                setTimeout(autoCalcExpiry, 100);
+                setTimeout(window.autoCalcExpiry, 100);
             });
             $('#issue_date_th').on('change blur keyup', function () {
                 $('#issue_date_db').val(convertToDBDate($(this).val()));
-                setTimeout(autoCalcExpiry, 100);
+                setTimeout(window.autoCalcExpiry, 100);
             });
             $('#expire_date_th').on('change blur keyup', function () {
                 if (!$('#is_lifetime').is(':checked')) $('#expire_date_db').val(convertToDBDate($(this).val()));
@@ -469,7 +526,7 @@ endforeach; ?>
                     $('#expire_date_db').val('9999-12-31');
                 } else {
                     $('#expire_date_th').val('').prop('readonly', false).removeClass('bg-gray-200 text-gray-400');
-                    autoCalcExpiry();
+                    window.autoCalcExpiry();
                 }
             });
         });
@@ -637,6 +694,125 @@ endforeach; ?>
             }
             let check = (11 - (sum % 11)) % 10;
             return check === parseInt(id.charAt(12));
+        }
+
+        // ================= Fetch COR Officer Data =================
+        function fetchCorOfficerData() {
+            const idCardInput = document.getElementById('id_card_input');
+            const idCard = idCardInput.value.trim();
+            const statusEl = document.getElementById('cor_fetch_status');
+            const btn = document.getElementById('fetch_cor_btn');
+
+            // Validate ID card
+            if (!idCard || idCard.length !== 13) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณากรอกเลขบัตรประชาชน',
+                    text: 'เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก',
+                    confirmButtonText: 'ตกลง'
+                });
+                idCardInput.focus();
+                return;
+            }
+
+            if (!checkThaiID(idCard)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เลขบัตรประชาชนไม่ถูกต้อง',
+                    text: 'เลขบัตรประชาชนไม่ถูกต้องตามหลักเกณฑ์',
+                    confirmButtonText: 'ตกลง'
+                });
+                return;
+            }
+
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังค้นหา...';
+            statusEl.classList.remove('hidden');
+            statusEl.className = 'text-xs mt-1 text-blue-600';
+            statusEl.textContent = '🔍 กำลังค้นหาข้อมูลจากฐานข้อมูลกำลังพล...';
+
+            // Fetch data from API
+            fetch(`api_fetch_cor_officer.php?id_card=${idCard}`)
+                .then(response => response.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-link"></i> เชื่อมฐานข้อมูลกำลังพล';
+
+                    if (data.status === 'success' && data.data) {
+                        const officer = data.data;
+
+                        // Fill in the form fields
+                        if (officer.rank_name) {
+                            document.getElementById('rank_input').value = officer.rank_name;
+                            if (officer.rank_id) {
+                                document.getElementById('rank_id_hidden').value = officer.rank_id;
+                            } else {
+                                // ถ้าไม่มี id ลองหาแมทช์จากตารางที่มีอยู่
+                                if (typeof syncRankId === 'function') syncRankId(officer.rank_name);
+                            }
+                        }
+
+                        if (officer.first_name) {
+                            document.querySelector('input[name="first_name"]').value = officer.first_name;
+                        }
+
+                        if (officer.last_name) {
+                            document.querySelector('input[name="last_name"]').value = officer.last_name;
+                        }
+
+                        if (officer.birth_date_th) {
+                            document.getElementById('create_birth_date_th').value = officer.birth_date_th;
+                            document.getElementById('create_birth_date_db').value = officer.birth_date;
+                            // Trigger auto-calculation of expiry date
+                            setTimeout(() => window.autoCalcExpiry(), 100);
+                        }
+
+                        if (officer.blood_type) {
+                            document.querySelector('select[name="blood_type"]').value = officer.blood_type;
+                        }
+
+                        if (officer.phone) {
+                            document.querySelector('input[name="phone"]').value = officer.phone;
+                        }
+
+                        if (officer.officer_type) {
+                            document.querySelector('select[name="officer_type"]').value = officer.officer_type;
+                        }
+
+                        if (officer.position_name) {
+                            document.getElementById('position_input').value = officer.position_name;
+                            // Trigger auto-fill for org if position has mapping
+                            if (typeof window.triggerAutoFill === 'function') {
+                                window.triggerAutoFill(officer.position_name);
+                            }
+                        }
+
+                        if (officer.org_id) {
+                            document.querySelector('select[name="org_id"]').value = officer.org_id;
+                        }
+
+                        // Show success message
+                        statusEl.className = 'text-xs mt-1 text-green-600 font-bold';
+                        statusEl.textContent = `✅ ดึงข้อมูลสำเร็จ: ${officer.rank_name || ''} ${officer.first_name} ${officer.last_name}`;
+
+                        // Auto-hide status after 5 seconds
+                        setTimeout(() => {
+                            statusEl.classList.add('hidden');
+                        }, 5000);
+
+                    } else {
+                        statusEl.className = 'text-xs mt-1 text-red-500';
+                        statusEl.textContent = `❌ ${data.message || 'ไม่พบข้อมูลกำลังพลในระบบ'}`;
+                    }
+                })
+                .catch(error => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-link"></i> เชื่อมฐานข้อมูลกำลังพล';
+                    statusEl.className = 'text-xs mt-1 text-red-500';
+                    statusEl.textContent = '❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ';
+                    console.error('Fetch error:', error);
+                });
         }
 
         document.getElementById('id_card_input').addEventListener('blur', function () {

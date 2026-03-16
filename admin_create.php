@@ -435,12 +435,16 @@ endforeach; ?>
             // ฟังก์ชันค้นหา ID ของยศจากชื่อยศ
             window.rankListOptions = rankListOptions;
             window.syncRankId = function(name) {
-                const match = window.rankListOptions.find(r => r.label === name.trim());
+                const trimmed = name.trim();
+                if (!trimmed) {
+                    rankIdHidden.value = '';
+                    return;
+                }
+                const match = window.rankListOptions.find(r => r.label === trimmed);
                 if (match) {
                     rankIdHidden.value = match.value;
-                } else {
-                    rankIdHidden.value = ''; // หรือจะกำหนดเป็น 0/null สำหรับยศใหม่
                 }
+                // ถ้าไม่ match ไม่ต้องล้าง — เพื่อรักษาค่าเดิมไว้ระหว่างพิมพ์
             };
 
             rankInput.addEventListener('input', function () {
@@ -745,10 +749,10 @@ endforeach; ?>
                         // Fill in the form fields
                         if (officer.rank_name) {
                             document.getElementById('rank_input').value = officer.rank_name;
-                            if (officer.rank_id) {
+                            if (officer.rank_id && !isNaN(officer.rank_id)) {
                                 document.getElementById('rank_id_hidden').value = officer.rank_id;
                             } else {
-                                // ถ้าไม่มี id ลองหาแมทช์จากตารางที่มีอยู่
+                                // ถ้าไม่มี id หรือไม่ใช่ตัวเลข ลองหาแมทช์จากตารางที่มีอยู่
                                 if (typeof syncRankId === 'function') syncRankId(officer.rank_name);
                             }
                         }
@@ -831,6 +835,23 @@ endforeach; ?>
                 e.preventDefault();
                 Swal.fire('ข้อมูลไม่ถูกต้อง!', 'เลขประจำตัวประชาชน 13 หลัก ไม่ถูกต้องตามหลักเกณฑ์', 'error');
                 document.getElementById('id_card_input').focus();
+                return;
+            }
+
+            // 🟢 ซิงค์ rank_id อีกครั้งก่อน submit — ป้องกันกรณีพิมพ์แก้ชื่อยศแล้วไม่ได้เลือกจาก dropdown
+            const rankInputVal = document.getElementById('rank_input').value.trim();
+            syncRankId(rankInputVal);
+
+            const rankIdVal = document.getElementById('rank_id_hidden').value;
+            if (!rankIdVal) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณาเลือกยศ',
+                    html: 'ยศที่กรอก "<b>' + rankInputVal + '</b>" ไม่ตรงกับรายการในระบบ<br>กรุณาเลือกยศจากรายการที่แสดง',
+                    confirmButtonText: 'ตกลง'
+                });
+                document.getElementById('rank_input').focus();
                 return;
             }
 

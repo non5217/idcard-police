@@ -17,7 +17,33 @@ $raw_admin_id = $_SESSION['user_id'] ?? 0;
 $admin_id = is_numeric($raw_admin_id) ? (int)$raw_admin_id : 0;
 // 1. รับค่า
 $status = $_POST['status'];
-$rank_id = $_POST['rank_id'];
+$rank_id = !empty($_POST['rank_id']) && is_numeric($_POST['rank_id']) ? (int)$_POST['rank_id'] : null;
+
+// fallback look up if JS mapping fails
+if (empty($rank_id) && !empty($_POST['rank_name_input'])) {
+    $rank_name = trim($_POST['rank_name_input']);
+    // 1) ลอง exact match ก่อน
+    $stmt_rank = $conn->prepare("SELECT id FROM idcard_ranks WHERE rank_name = ? LIMIT 1");
+    $stmt_rank->execute([$rank_name]);
+    $rank_match = $stmt_rank->fetch();
+    if ($rank_match) {
+        $rank_id = $rank_match['id'];
+    }
+    else {
+        // 2) ลอง LIKE fallback (กรณียศจาก COR มีรูปแบบต่างเล็กน้อย)
+        $stmt_rank2 = $conn->prepare("SELECT id FROM idcard_ranks WHERE rank_name LIKE ? LIMIT 1");
+        $stmt_rank2->execute(['%' . $rank_name . '%']);
+        $rank_match2 = $stmt_rank2->fetch();
+        if ($rank_match2) {
+            $rank_id = $rank_match2['id'];
+        }
+    }
+}
+
+if (empty($rank_id)) {
+    die("⛔ Error Saving Record: ไม่สามารถระบุ 'ยศ' ได้ กรุณาเลือกยศจากรายการที่ค้นหาพบ");
+}
+
 $first_name = trim($_POST['first_name']);
 $last_name = trim($_POST['last_name']);
 $full_name = $first_name . ' ' . $last_name;

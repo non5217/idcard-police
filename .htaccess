@@ -5,7 +5,7 @@ Options -Indexes
 <FilesMatch "^\.">
     Require all denied
 </FilesMatch>
-<FilesMatch "^(connect\.php|config\.php|helpers\.php|admin_auth\.php|public_navbar\.php|admin_navbar\.php)$">
+<FilesMatch "^(connect\.php|config\.php|helpers\.php|admin_auth\.php|public_navbar\.php|admin_navbar\.php|announcement_functions\.php|announcement_section\.php)$">
     Require all denied
 </FilesMatch>
 

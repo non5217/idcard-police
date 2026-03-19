@@ -26,18 +26,28 @@ if (isset($_SESSION['user_id']) && !empty($_SESSION['role']) && $_SESSION['role'
 if (empty($_SESSION['oauth_state'])) {
     $_SESSION['oauth_state'] = bin2hex(random_bytes(16)); // 🟢 สร้างรหัสลับกันโดนหลอกล็อกอิน
 }
-// 2. เตรียม Link สำหรับส่งไป Console
+
+// 🟢 2.5 สร้าง PKCE Code Verifier & Challenge
+if (empty($_SESSION['code_verifier'])) {
+    $_SESSION['code_verifier'] = bin2hex(random_bytes(32)); 
+}
+// S256 Challenge
+$code_challenge = rtrim(strtr(base64_encode(hash('sha256', $_SESSION['code_verifier'], true)), '+/', '-_'), '=');
+
+// 3. เตรียม Link สำหรับส่งไป Console
 $params = [
     'action' => 'oauth_authorize',
     'client_id' => CLIENT_ID,
     'redirect_uri' => REDIRECT_URI,
     'response_type' => 'code',
-    'scope' => 'basic_info',
-    'state' => $_SESSION['oauth_state'] // 🟢 แนบรหัสลับไปด้วย
+    'scope' => 'profile email department', // 🟢 อัปเดต Scope ใหม่
+    'state' => $_SESSION['oauth_state'],
+    'code_challenge' => $code_challenge,
+    'code_challenge_method' => 'S256'
 ];
 $login_url = CONSOLE_API_URL . '?' . http_build_query($params);
 
-// 3. สั่ง Redirect ด้วย PHP Header (วิธีหลัก)
+// 4. สั่ง Redirect ด้วย PHP Header (วิธีหลัก)
 if (!headers_sent()) {
     header("Location: " . $login_url);
 }

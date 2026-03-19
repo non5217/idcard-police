@@ -52,6 +52,54 @@ if (isset($_GET['clear'])) {
 
     <?php include 'public_navbar.php'; ?>
 
+    <!-- Modal ประกาศปัญหาการเชื่อมโยง cURL -->
+    <div id="curlWarningModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+        <div class="bg-amber-50 border-2 border-amber-400 rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-[fadeIn_0.3s_ease-out]">
+            <button onclick="closeCurlWarning()" class="absolute top-4 right-4 text-amber-600 hover:text-amber-800 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-amber-500 text-3xl"></i>
+                </div>
+                
+                <h3 class="text-xl font-bold text-amber-900 mb-3">
+                    ประกาศปัญหาการเชื่อมโยงระบบ
+                </h3>
+                
+                <p class="text-amber-800 font-medium mb-2">
+                    <strong>ขณะนี้ประสบปัญหาการเชื่อมโยงระบบ cURL</strong>
+                </p>
+                
+                <p class="text-amber-700 text-sm mb-4">
+                    อาจทำให้บางช่วงเวลาไม่สามารถใช้งานได้ชั่วคราว
+                </p>
+                
+                <div class="bg-amber-100 rounded-lg p-3 mb-4">
+                    <p class="text-amber-700 text-sm">
+                        <i class="fas fa-tools mr-1"></i>
+                        เจ้าหน้าที่กำลังเร่งดำเนินการแก้ไข
+                    </p>
+                    <p class="text-amber-600 text-xs mt-1">
+                        ขออภัยในความไม่สะดวก
+                    </p>
+                </div>
+                
+                <button onclick="closeCurlWarning()" 
+                    class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-6 rounded-lg transition shadow-md">
+                    <i class="fas fa-check mr-2"></i>เข้าใจแล้ว
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function closeCurlWarning() {
+            document.getElementById('curlWarningModal').style.display = 'none';
+        }
+    </script>
+
     <main class="flex-grow flex flex-col items-center justify-center p-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full">
 

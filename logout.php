@@ -1,37 +1,25 @@
 <?php
+// =============================================================
 // idcard/logout.php
-require_once 'env_loader.php'; // โหลด Session + CONSOLE_API_URL
+// =============================================================
+// ลบ Session ของ idcard เอง แล้วส่งไปออกจากระบบกลางของ Portal (SSO Logout)
+// =============================================================
 
-// ============================================================
-// 1. แจ้ง Portal ให้ Logout (Revoke Server-side Session ด้วย)
-//    ส่ง Cookie PORTALSESSID ไปด้วยเพื่อให้ Portal รู้ว่า Session ไหน
-// ============================================================
-if (isset($_COOKIE['PORTALSESSID'])) {
-    $ch = curl_init(CONSOLE_API_URL . '?action=logout');
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5); // รอแค่ 5 วินาที ไม่งั้นค้าง
-    // ส่ง Cookie PORTALSESSID ไปด้วย เพื่อให้ Portal รู้ vs Session ไหน
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Cookie: PORTALSESSID=' . $_COOKIE['PORTALSESSID']
-    ]);
-    // ส่ง CSRF Token ไปด้วย (ถ้ามีเก็บไว้ใน Session)
-    $csrfToken = $_SESSION['portal_csrf_token'] ?? '';
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['csrf_token' => $csrfToken]));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Cookie: PORTALSESSID=' . $_COOKIE['PORTALSESSID']
-    ]);
-    curl_exec($ch);
-    curl_close($ch);
+// 0. ตั้งค่า Session Cookie ให้ตรงกับตอน Login
+session_set_cookie_params([
+    'lifetime' => 86400,
+    'path' => '/idcard/',
+    'domain' => '.pathumthani.police.go.th',
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 
-    // ลบ Cookie Portal ออกจาก Browser ด้วย
-    setcookie('PORTALSESSID', '', time() - 3600, '/');
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-// ============================================================
-// 2. ล้าง Session ของ idcard เอง
-// ============================================================
+// 1. ล้าง Session ของ idcard เอง
 $_SESSION = [];
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
@@ -42,9 +30,11 @@ if (ini_get("session.use_cookies")) {
 }
 session_destroy();
 
-// ============================================================
-// 3. ดีดกลับไปหน้าหลักของ Portal
-// ============================================================
-header("Location: https://portal.pathumthani.police.go.th/");
+// 2. ส่ง User ไปที่ SSO Logout กลางของ Portal
+//    Portal จะล้าง Session ของตัวเองให้ทั้งหมด แล้วเด้งกลับมาที่ idcard/login.php
+$sso_logout_url = 'https://portal.pathumthani.police.go.th/portal/sso_logout.php?redirect='
+    . urlencode('https://portal.pathumthani.police.go.th/idcard/login.php');
+
+header("Location: " . $sso_logout_url);
 exit();
 ?>

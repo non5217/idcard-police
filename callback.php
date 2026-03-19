@@ -36,8 +36,12 @@ $params = [
     'client_id' => CLIENT_ID,
     'client_secret' => CLIENT_SECRET,
     'redirect_uri' => REDIRECT_URI,
-    'code' => $code
+    'code' => $code,
+    'code_verifier' => $_SESSION['code_verifier'] ?? '' // 🟢 เพิ่ม PKCE Verifier
 ];
+
+// ลบ Verifier ทิ้งทันทีเพื่อไม่ให้ถูกนำไปใช้ซ้ำ
+unset($_SESSION['code_verifier']);
 
 // --- เริ่มยิง cURL ---
 $ch = curl_init();
@@ -89,6 +93,11 @@ $_SESSION['user_id'] = $user_data['id'];
 $_SESSION['fullname'] = ($user_data['rank'] ?? '') . ($user_data['first_name'] ?? '') . ' ' . ($user_data['last_name'] ?? '');
 $_SESSION['id_card'] = $user_data['id_card'] ?? '';
 $_SESSION['access_token'] = $access_token;
+$_SESSION['access_token_expires_at'] = time() + ($token_data['expires_in'] ?? 3600); // 🟢 เก็บเวลาหมดอายุ
+
+if (!empty($token_data['refresh_token'])) {
+    $_SESSION['refresh_token'] = $token_data['refresh_token']; // 🟢 เก็บ Refresh Token
+}
 
 // ดึง Role จากตารางในฐานข้อมูล (ถ้ามี)
 $stmt = $conn->prepare("SELECT role FROM idcard_staff_roles WHERE console_user_id = ?");

@@ -57,6 +57,7 @@ if (!headers_sent()) {
 <head>
     <meta charset="UTF-8">
     <title>กำลังเข้าสู่ระบบ...</title>
+    <link rel="icon" type="image/png" href="https://portal.pathumthani.police.go.th/assets/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style> body { font-family: 'Sarabun', sans-serif; } </style>

@@ -7,6 +7,32 @@ if (isset($_GET['clear'])) {
     session_unset();
     session_destroy();
 }
+
+// --- ดึงค่าประกาศหน้าแรก ---
+$ann_stmt = $conn->query("SELECT setting_key, setting_value FROM idcard_settings WHERE setting_key LIKE 'announcement_%'");
+$ann_data = [];
+while ($row = $ann_stmt->fetch(PDO::FETCH_ASSOC)) {
+    $ann_data[$row['setting_key']] = $row['setting_value'];
+}
+
+$ann_enabled = $ann_data['announcement_enabled'] ?? 'off';
+$ann_title = $ann_data['announcement_title'] ?? 'ประกาศปัญหาการเชื่อมโยงระบบ';
+$ann_msg = $ann_data['announcement_message'] ?? 'ขณะนี้ประสบปัญหาการเชื่อมโยงระบบ cURL';
+$ann_sub = $ann_data['announcement_sub_message'] ?? 'อาจทำให้บางช่วงเวลาไม่สามารถใช้งานได้ชั่วคราว';
+$ann_box_title = $ann_data['announcement_box_title'] ?? 'เจ้าหน้าที่กำลังเร่งดำเนินการแก้ไข';
+$ann_box_text = $ann_data['announcement_box_text'] ?? 'ขออภัยในความไม่สะดวก';
+$ann_type = $ann_data['announcement_type'] ?? 'warning';
+$ann_icon = $ann_data['announcement_icon'] ?? 'fas fa-bullhorn';
+$ann_fsize = $ann_data['announcement_font_size'] ?? 'text-base';
+
+// กำหนดสีตามประเภทที่เลือก
+$themes = [
+    'info' => ['bg' => 'bg-blue-50', 'border' => 'border-blue-400', 'text' => 'text-blue-900', 'btn' => 'bg-blue-500 hover:bg-blue-600', 'icon_bg' => 'bg-blue-100', 'icon_text' => 'text-blue-500', 'sub' => 'text-blue-700', 'box' => 'bg-blue-100'],
+    'warning' => ['bg' => 'bg-amber-50', 'border' => 'border-amber-400', 'text' => 'text-amber-900', 'btn' => 'bg-amber-500 hover:bg-amber-600', 'icon_bg' => 'bg-amber-100', 'icon_text' => 'text-amber-500', 'sub' => 'text-amber-700', 'box' => 'bg-amber-100'],
+    'danger' => ['bg' => 'bg-red-50', 'border' => 'border-red-400', 'text' => 'text-red-900', 'btn' => 'bg-red-500 hover:bg-red-600', 'icon_bg' => 'bg-red-100', 'icon_text' => 'text-red-500', 'sub' => 'text-red-700', 'box' => 'bg-red-100'],
+    'success' => ['bg' => 'bg-green-50', 'border' => 'border-green-400', 'text' => 'text-green-900', 'btn' => 'bg-green-500 hover:bg-green-600', 'icon_bg' => 'bg-green-100', 'icon_text' => 'text-green-500', 'sub' => 'text-green-700', 'box' => 'bg-green-100']
+];
+$theme = $themes[$ann_type] ?? $themes['warning'];
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -52,51 +78,57 @@ if (isset($_GET['clear'])) {
 
     <?php include 'public_navbar.php'; ?>
 
-    <!-- Modal ประกาศปัญหาการเชื่อมโยง cURL -->
-    <div id="curlWarningModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
-        <div class="bg-amber-50 border-2 border-amber-400 rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-[fadeIn_0.3s_ease-out]">
-            <button onclick="closeCurlWarning()" class="absolute top-4 right-4 text-amber-600 hover:text-amber-800 transition">
+    <!-- Modal ประกาศหน้าแรก -->
+    <?php if ($ann_enabled === 'on'): ?>
+    <div id="announcementModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+        <div class="<?= $theme['bg'] ?> border-2 <?= $theme['border'] ?> rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-[fadeIn_0.3s_ease-out]">
+            <button onclick="closeAnnouncement()" class="absolute top-4 right-4 <?= $theme['text'] ?> opacity-60 hover:opacity-100 transition">
                 <i class="fas fa-times text-xl"></i>
             </button>
             
             <div class="text-center">
-                <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-exclamation-triangle text-amber-500 text-3xl"></i>
+                <div class="w-16 h-16 <?= $theme['icon_bg'] ?> rounded-full flex items-center justify-center mx-auto mb-4 border <?= $theme['border'] ?> border-opacity-30">
+                    <i class="<?= htmlspecialchars($ann_icon) ?> <?= $theme['icon_text'] ?> text-3xl"></i>
                 </div>
                 
-                <h3 class="text-xl font-bold text-amber-900 mb-3">
-                    ประกาศปัญหาการเชื่อมโยงระบบ
+                <h3 class="text-xl font-bold <?= $theme['text'] ?> mb-3">
+                    <?= htmlspecialchars($ann_title) ?>
                 </h3>
                 
-                <p class="text-amber-800 font-medium mb-2">
-                    <strong>ขณะนี้ประสบปัญหาการเชื่อมโยงระบบ cURL</strong>
+                <p class="<?= $theme['text'] ?> <?= htmlspecialchars($ann_fsize) ?> font-medium mb-2">
+                    <strong><?= nl2br(htmlspecialchars($ann_msg)) ?></strong>
                 </p>
                 
-                <p class="text-amber-700 text-sm mb-4">
-                    อาจทำให้บางช่วงเวลาไม่สามารถใช้งานได้ชั่วคราว
+                <?php if ($ann_sub): ?>
+                <p class="<?= $theme['sub'] ?> text-sm mb-4">
+                    <?= htmlspecialchars($ann_sub) ?>
                 </p>
+                <?php endif; ?>
                 
-                <div class="bg-amber-100 rounded-lg p-3 mb-4">
-                    <p class="text-amber-700 text-sm">
-                        <i class="fas fa-tools mr-1"></i>
-                        เจ้าหน้าที่กำลังเร่งดำเนินการแก้ไข
+                <?php if ($ann_box_title || $ann_box_text): ?>
+                <div class="<?= $theme['box'] ?> rounded-lg p-3 mb-4">
+                    <p class="<?= $theme['sub'] ?> text-sm font-bold">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        <?= htmlspecialchars($ann_box_title) ?>
                     </p>
-                    <p class="text-amber-600 text-xs mt-1">
-                        ขออภัยในความไม่สะดวก
+                    <p class="<?= $theme['sub'] ?> text-sm mt-1">
+                        <?= htmlspecialchars($ann_box_text) ?>
                     </p>
                 </div>
+                <?php endif; ?>
                 
-                <button onclick="closeCurlWarning()" 
-                    class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-6 rounded-lg transition shadow-md">
+                <button onclick="closeAnnouncement()" 
+                    class="<?= $theme['btn'] ?> text-white font-bold py-2 px-6 rounded-lg transition shadow-md">
                     <i class="fas fa-check mr-2"></i>เข้าใจแล้ว
                 </button>
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <script>
-        function closeCurlWarning() {
-            document.getElementById('curlWarningModal').style.display = 'none';
+        function closeAnnouncement() {
+            document.getElementById('announcementModal').style.display = 'none';
         }
     </script>
 

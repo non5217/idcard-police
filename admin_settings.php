@@ -347,6 +347,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = "อัปเดตการตั้งค่าการแจ้งเตือนสำเร็จ";
     }
 
+    // --- 🟢 5. จัดการการประกาศ (Announcement) ---
+    elseif ($action === 'update_announcement') {
+        if ($_SESSION['role'] !== 'Super_Admin') {
+            die("⛔ Access Denied");
+        }
+
+        $enabled = $_POST['announcement_enabled'] ?? 'off';
+        $title = trim($_POST['announcement_title']);
+        $msg_main = trim($_POST['announcement_message']);
+        $msg_sub = trim($_POST['announcement_sub_message']);
+        $box_title = trim($_POST['announcement_box_title']);
+        $box_text = trim($_POST['announcement_box_text']);
+        $type = $_POST['announcement_type'] ?? 'warning';
+        $icon = trim($_POST['announcement_icon']) ?: 'fas fa-bullhorn';
+        $fsize = $_POST['announcement_font_size'] ?? 'text-base';
+
+        $settings = [
+            'announcement_enabled' => $enabled,
+            'announcement_title' => $title,
+            'announcement_message' => $msg_main,
+            'announcement_sub_message' => $msg_sub,
+            'announcement_box_title' => $box_title,
+            'announcement_box_text' => $box_text,
+            'announcement_type' => $type,
+            'announcement_icon' => $icon,
+            'announcement_font_size' => $fsize
+        ];
+
+        foreach ($settings as $key => $val) {
+            $stmt = $conn->prepare("INSERT INTO idcard_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            $stmt->execute([$key, $val]);
+        }
+
+        saveLog($conn, 'SETTING_ANNOUNCEMENT', 'อัปเดตการตั้งค่าประกาศหน้าแรก');
+        $msg = "อัปเดตการประกาศเรียบร้อยแล้ว";
+    }
+
     // --- 🟢 ระบบทดสอบการแจ้งเตือน ---
     elseif ($action === 'test_notification') {
         if ($_SESSION['role'] !== 'Super_Admin')
@@ -456,6 +493,17 @@ $line_user_id = $nt_settings['line_user_id'] ?? '';
 $line_msg_count = (int)($nt_settings['line_msg_count'] ?? 0);
 $tg_bot_token = $nt_settings['telegram_bot_token'] ?? '';
 $tg_chat_id = $nt_settings['telegram_chat_id'] ?? '';
+
+// ดึงค่าตั้งค่าการประกาศ
+$ann_enabled = $nt_settings['announcement_enabled'] ?? 'off';
+$ann_title = $nt_settings['announcement_title'] ?? 'ประกาศปัญหาการเชื่อมโยงระบบ';
+$ann_msg = $nt_settings['announcement_message'] ?? 'ขณะนี้ประสบปัญหาการเชื่อมโยงระบบ cURL';
+$ann_sub = $nt_settings['announcement_sub_message'] ?? 'อาจทำให้บางช่วงเวลาไม่สามารถใช้งานได้ชั่วคราว';
+$ann_box_title = $nt_settings['announcement_box_title'] ?? 'เจ้าหน้าที่กำลังเร่งดำเนินการแก้ไข';
+$ann_box_text = $nt_settings['announcement_box_text'] ?? 'ขออภัยในความไม่สะดวก';
+$ann_type = $nt_settings['announcement_type'] ?? 'warning';
+$ann_icon = $nt_settings['announcement_icon'] ?? 'fas fa-bullhorn';
+$ann_fsize = $nt_settings['announcement_font_size'] ?? 'text-base';
 
 // ==========================================
 // 🟢 ดึงข้อมูลเลขรันนิ่งปัจจุบันมาโชว์แอดมิน
@@ -987,8 +1035,143 @@ endforeach; ?>
                     </div>
                 </form>
             </div>
-            <?php
-endif; ?>
+            <?php endif; ?>
+
+            <!-- 🟢 6. ตั้งค่าประกาศหน้าแรก (เฉพาะ Super_Admin) -->
+            <?php if ($_SESSION['role'] === 'Super_Admin'): ?>
+            <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-amber-500 md:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-amber-800"><i class="fas fa-bullhorn"></i> 6. ตั้งค่าประกาศหน้าแรก (Announcement Modal)</h2>
+                    <div class="flex items-center gap-2 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                        <span class="text-xs font-bold text-amber-800 uppercase">สถานะปัจจุบัน:</span>
+                        <?php if ($ann_enabled === 'on'): ?>
+                            <span class="flex items-center gap-1 text-xs font-bold text-green-600"><i class="fas fa-check-circle"></i> เปิดใช้งาน</span>
+                        <?php else: ?>
+                            <span class="flex items-center gap-1 text-xs font-bold text-red-500"><i class="fas fa-times-circle"></i> ปิดใช้งาน</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-gray-500 mb-6">จัดการข้อความประกาศที่จะเด้งขึ้นมาในหน้าแรก (index) สำหรับแจ้งข่าวสารหรือแจ้งปิดปรับปรุงระบบ</p>
+
+                <div class="mb-8 p-4 bg-gray-50 border border-dashed border-gray-300 rounded-xl">
+                    <div class="flex flex-col md:flex-row md:items-center gap-4">
+                        <div class="flex-shrink-0">
+                            <span class="text-sm font-bold text-gray-700"><i class="fas fa-magic mr-1 text-purple-600"></i> เลือกรูปแบบสำเร็จรูป (Presets):</span>
+                        </div>
+                        <div class="flex-grow">
+                            <select id="announcement_presets" onchange="loadAnnouncementPreset(this.value)" class="w-full border p-2 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-400 outline-none">
+                                <option value="">-- เลือกรูปแบบประกาศที่ต้องการโหลด --</option>
+                                <option value="maintenance">🛠️ 1. ปิดปรับปรุงระบบ (Scheduled Maintenance)</option>
+                                <option value="urgent_fix">🚨 2. แจ้งซ่อมด่วน (Emergency Repair)</option>
+                                <option value="db_error">🔗 3. ปัญหาการเชื่อมต่อฐานข้อมูล (DB/Link Issue)</option>
+                                <option value="new_service">🆕 4. เปิดบริการยื่นคำขอใหม่ (New Service)</option>
+                                <option value="photo_guide">📸 5. คำแนะนำภาพถ่าย (Photo Guidelines)</option>
+                                <option value="status_check">🔍 6. วิธีตรวจสอบสถานะ (Status Tracking)</option>
+                                <option value="service_resumed">✅ 7. ระบบกลับมาใช้งานได้ปกติ (Service Restored)</option>
+                                <option value="doc_ready">📄 8. เตรียมเอกสารให้พร้อม (Document Prep)</option>
+                                <option value="holiday">📅 9. ประกาศวันหยุด/ปิดทำการ (Holiday/Closed)</option>
+                                <option value="update_feature">🚀 10. แนะนำฟีเจอร์ใหม่ (New Features)</option>
+                            </select>
+                        </div>
+                        <div class="text-[10px] text-gray-400 italic">
+                            * เมื่อเลือกแล้วข้อมูลในฟอร์มด้านล่างจะถูกเปลี่ยนทันที
+                        </div>
+                    </div>
+                </div>
+
+                <form action="" method="POST" class="space-y-6">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
+                    <input type="hidden" name="action" value="update_announcement">
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+                        <div class="md:col-span-1 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label class="block text-sm font-bold text-gray-700 mb-3">การแสดงผล</label>
+                            <div class="space-y-3 mb-6">
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="announcement_enabled" value="on" <?= $ann_enabled === 'on' ? 'checked' : ''?> 
+                                        class="w-5 h-5 text-amber-600 border-gray-300 focus:ring-amber-500">
+                                    <span class="font-bold text-gray-700 group-hover:text-amber-700 transition">เปิดการประกาศ</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="announcement_enabled" value="off" <?= $ann_enabled === 'off' ? 'checked' : ''?>
+                                        class="w-5 h-5 text-gray-400 border-gray-300 focus:ring-gray-300">
+                                    <span class="font-bold text-gray-500 group-hover:text-gray-700 transition">ปิดการประกาศ</span>
+                                </label>
+                            </div>
+
+                            <label class="block text-sm font-bold text-gray-700 mb-2 border-t pt-4">รูปแบบสี (Theme)</label>
+                            <select name="announcement_type" class="w-full border p-2 rounded mb-4 text-sm font-bold">
+                                <option value="info" <?= $ann_type === 'info' ? 'selected' : '' ?> class="text-blue-600">Info (Blue)</option>
+                                <option value="warning" <?= $ann_type === 'warning' ? 'selected' : '' ?> class="text-amber-600">Warning (Amber)</option>
+                                <option value="danger" <?= $ann_type === 'danger' ? 'selected' : '' ?> class="text-red-600">Danger (Red)</option>
+                                <option value="success" <?= $ann_type === 'success' ? 'selected' : '' ?> class="text-green-600">Success (Green)</option>
+                            </select>
+
+                            <label class="block text-sm font-bold text-gray-700 mb-2 border-t pt-4">ขนาดอักษร (Main Text)</label>
+                            <select name="announcement_font_size" class="w-full border p-2 rounded text-sm font-bold">
+                                <option value="text-sm" <?= $ann_fsize === 'text-sm' ? 'selected' : '' ?>>Small</option>
+                                <option value="text-base" <?= $ann_fsize === 'text-base' ? 'selected' : '' ?>>Normal</option>
+                                <option value="text-lg" <?= $ann_fsize === 'text-lg' ? 'selected' : '' ?>>Large</option>
+                                <option value="text-xl" <?= $ann_fsize === 'text-xl' ? 'selected' : '' ?>>Extra Large</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-3 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">หัวข้อประกาศ (Title)</label>
+                                    <input type="text" name="announcement_title" value="<?= htmlspecialchars($ann_title)?>"
+                                        class="w-full border p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-amber-400 outline-none text-sm font-bold" required>
+                                </div>
+                                <div class="md:col-span-1">
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">ไอคอน (FontAwesome Class)</label>
+                                    <div class="relative">
+                                        <input type="text" name="announcement_icon" value="<?= htmlspecialchars($ann_icon)?>"
+                                            placeholder="fas fa-bullhorn"
+                                            class="w-full border p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-amber-400 outline-none text-sm font-mono">
+                                        <i class="<?= htmlspecialchars($ann_icon) ?> absolute right-3 top-3 text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">ข้อความหลัก (Main Message)</label>
+                                    <textarea name="announcement_message" rows="2" 
+                                        class="w-full border p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-amber-400 outline-none text-sm" required><?= htmlspecialchars($ann_msg)?></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">ข้อความรอง (Sub Message)</label>
+                                    <input type="text" name="announcement_sub_message" value="<?= htmlspecialchars($ann_sub)?>"
+                                        class="w-full border p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-amber-400 outline-none text-xs">
+                                </div>
+                            </div>
+
+                            <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-4">
+                                <h3 class="text-xs font-bold text-amber-800 uppercase border-b border-amber-200 pb-2"><i class="fas fa-info-circle mr-1"></i> ส่วนเน้นข้อความ (Emphasis Box)</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-amber-700 uppercase mb-1">หัวข้อในกล่อง (Box Title)</label>
+                                        <input type="text" name="announcement_box_title" value="<?= htmlspecialchars($ann_box_title)?>"
+                                            class="w-full border border-amber-300 p-2 rounded bg-white text-xs focus:ring-2 focus:ring-amber-400 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-amber-700 uppercase mb-1">ข้อความในกล่อง (Box Text)</label>
+                                        <input type="text" name="announcement_box_text" value="<?= htmlspecialchars($ann_box_text)?>"
+                                            class="w-full border border-amber-300 p-2 rounded bg-white text-xs focus:ring-2 focus:ring-amber-400 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center pt-4 border-t border-gray-100">
+                        <button type="submit"
+                            class="bg-amber-600 hover:bg-amber-700 text-white px-12 py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-105">
+                            <i class="fas fa-save mr-2"></i> บันทึกและปรับปรุงประกาศหน้าแรก
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <?php endif; ?>
 
         </div>
     </div>
@@ -1056,7 +1239,143 @@ endif; ?>
             });
         }
     </script>
+    <script>
 
+        /** --- ระบบ Template ประกาศสำเร็จรูป (Added by Antigravity) --- */
+        const annPresets = {
+            "maintenance": {
+                title: "แจ้งปิดปรับปรุงระบบชั่วคราว",
+                msg: "ระบบจะปิดปรับปรุงเพื่อเพิ่มประสิทธิภาพการใช้งาน",
+                sub: "ตั้งแต่วันที่ 25 มีนาคม 2567 เวลา 18.00 - 21.00 น.",
+                box_title: "เร่งดำเนินการโดยเจ้าหน้าที่เทคนิค",
+                box_text: "ขออภัยในความไม่สะดวกเป็นอย่างสูง",
+                type: "danger",
+                icon: "fas fa-tools",
+                fsize: "text-base"
+            },
+            "urgent_fix": {
+                title: "แจ้งปิดระบบกรณีฉุกเฉิน",
+                msg: "พบเหตุขัดข้องทางเทคนิคร้ายแรง เจ้าหน้ากำลังดำเนินการแก้ไข",
+                sub: "คาดว่าจะกลับมาใช้งานได้ภายใน 1-2 ชั่วโมงนี้",
+                box_title: "Emergency Repair",
+                box_text: "ขออภัยที่ต้องปิดระบบอย่างกะทันหัน",
+                type: "danger",
+                icon: "fas fa-exclamation-triangle",
+                fsize: "text-lg"
+            },
+            "db_error": {
+                title: "ประกาศปัญหาการเชื่อมโยงระบบ",
+                msg: "ขณะนี้ประสบปัญหาการเชื่อมโยงระบบ cURL / ฐานข้อมูลกลาง",
+                sub: "อาจทำให้บางช่วงเวลาไม่สามารถใช้งานได้ชั่วคราว",
+                box_title: "เจ้าหน้าที่กำลังเร่งดำเนินการแก้ไข",
+                box_text: "ขออภัยในความไม่สะดวก",
+                type: "warning",
+                icon: "fas fa-link",
+                fsize: "text-base"
+            },
+            "new_service": {
+                title: "เปิดระบบยื่นคำขอรับบัตรใหม่",
+                msg: "ขณะนี้เปิดให้ข้าราชการตำรวจในสังกัด ยื่นคำขอผ่านระบบได้แล้ว",
+                sub: "โปรดเตรียมข้อมูลและไฟล์ภาพให้พร้อมก่อนเริ่มดำเนินการ",
+                box_title: "ยินดีต้อนรับ",
+                box_text: "รบกวนตรวจสอบข้อมูลให้ถูกต้องก่อนกดส่งคำขอ",
+                type: "info",
+                icon: "fas fa-id-card",
+                fsize: "text-lg"
+            },
+            "photo_guide": {
+                title: "คำแนะนำการแนบไฟล์ภาพถ่าย",
+                msg: "โปรดใช้ภาพถ่ายหน้าตรง ชุดปกติขาว พื้นหลังสีฟ้าหรือขาว",
+                sub: "ขนาดไฟล์ที่แนะนำคือ 1MB - 2MB เพื่อความคมชัด",
+                box_title: "ระเบียบการถ่ายภาพ",
+                box_text: "ห้ามใช้ภาพถ่ายจากแอปพลิเคชันที่ปรับแต่งใบหน้าจนเกินจริง",
+                type: "info",
+                icon: "fas fa-camera",
+                fsize: "text-base"
+            },
+            "status_check": {
+                title: "วิธีการติดตามสถานะบัตร",
+                msg: "ท่านสามารถนำเลขบัตรประชาชน มาตรวจสอบสถานะได้ที่เมนูด้านล่าง",
+                sub: "ระบบจะแจ้งว่าบัตรของท่านอยู่ในขั้นตอนใด (รอพิจารณา, กำลังผลิต, หรือเสร็จแล้ว)",
+                box_title: "ตรวจสอบได้ 24 ชม.",
+                box_text: "หากพบข้อมูลไม่ถูกต้อง โปรดแจ้งเจ้าหน้าที่ทันที",
+                type: "info",
+                icon: "fas fa-search",
+                fsize: "text-base"
+            },
+            "service_resumed": {
+                title: "ระบบกลับมาใช้งานได้ตามปกติ",
+                msg: "ปัญหาทางเทคนิคได้รับการแก้ไขเรียบร้อยแล้ว",
+                sub: "ขอขอบคุณทุกท่านที่รอคอยและขออภัยในความไม่สะดวกที่เกิดขึ้น",
+                box_title: "System Restored",
+                box_text: "ใช้งานได้ตามปกติ 100%",
+                type: "success",
+                icon: "fas fa-check-circle",
+                fsize: "text-base"
+            },
+            "doc_ready": {
+                title: "เตรียมเอกสารให้พร้อมก่อนยื่น",
+                msg: "โปรดสแกนเอกสารหลักฐานที่จำเป็นเป็นไฟล์ PDF หรือ JPG",
+                sub: "อาทิเช่น สำเนาคำสั่งแต่งตั้ง หรือบัตรเดิมที่หมดอายุ",
+                box_title: "Checklist เอกสาร",
+                box_text: "เอกสารที่ชัดเจนจะช่วยให้การอนุมัติรวดเร็วยิ่งขึ้น",
+                type: "warning",
+                icon: "fas fa-file-invoice",
+                fsize: "text-base"
+            },
+            "holiday": {
+                title: "แจ้งวันหยุดทำการและปิดระบบชั่วคราว",
+                msg: "เนื่องในวันหยุดนักขัตฤกษ์ ระบบจะปิดรับคำขอชั่วคราว",
+                sub: "ตั้งแต่วันที่ 13 - 16 เมษายน นี้",
+                box_title: "สงกรานต์ปีใหม่ไทย",
+                box_text: "สุขสันต์วันสงกรานต์ เดินทางปลอดภัยทุกท่านครับ",
+                type: "warning",
+                icon: "fas fa-calendar-day",
+                fsize: "text-base"
+            },
+            "update_feature": {
+                title: "อัปเดตฟีเจอร์ใหม่ในระบบ Portal",
+                msg: "ขณะนี้ระบบสามารถตรวจสอบประวัติการยื่นคำขอย้อนหลังได้แล้ว",
+                sub: "รวมถึงการแจ้งเตือนผ่านช่องทางโซเชียลมีเดียที่ท่านตั้งค่าไว้",
+                box_title: "What's New",
+                box_text: "พัฒนาอย่างต่อเนื่องเพื่อความสะดวกของเพื่อนข้าราชการตำรวจ",
+                type: "info",
+                icon: "fas fa-rocket",
+                fsize: "text-base"
+            }
+        };
+
+        window.loadAnnouncementPreset = function(key) {
+            if (!key || !annPresets[key]) return;
+
+            const data = annPresets[key];
+            const form = document.querySelector('input[name="action"][value="update_announcement"]').closest('form');
+
+            form.querySelector('input[name="announcement_title"]').value = data.title;
+            form.querySelector('textarea[name="announcement_message"]').value = data.msg;
+            form.querySelector('input[name="announcement_sub_message"]').value = data.sub;
+            form.querySelector('input[name="announcement_box_title"]').value = data.box_title;
+            form.querySelector('input[name="announcement_box_text"]').value = data.box_text;
+            form.querySelector('select[name="announcement_type"]').value = data.type;
+            form.querySelector('input[name="announcement_icon"]').value = data.icon;
+            form.querySelector('select[name="announcement_font_size"]').value = data.fsize;
+
+            // Update preview icon
+            const iconPreview = form.querySelector('.relative i');
+            if (iconPreview) {
+                iconPreview.className = data.icon + " absolute right-3 top-3 text-gray-400";
+            }
+
+            Swal.fire({
+                title: 'โหลดรูปแบบสำเร็จรูปแล้ว!',
+                text: 'ข้อมูลถูกกรอกลงในฟอร์มแล้ว กรุณาตรวจสอบและกดบันทึกเพื่อใช้งาน',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        };
+
+    </script>
     <div id="editPosModal"
         class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 backdrop-blur-sm">
         <div class="bg-white p-6 rounded-xl w-96 shadow-2xl transform transition-transform scale-100">

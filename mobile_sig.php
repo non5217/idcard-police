@@ -14,6 +14,7 @@ if (empty($sig_id)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ลงลายมือชื่อ - Police ID Card</title>
+    <link rel="icon" type="image/png" href="https://portal.pathumthani.police.go.th/assets/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
@@ -80,18 +81,20 @@ if (empty($sig_id)) {
         </div>
 
         <div class="flex-grow flex items-center justify-center py-4">
-            <div class="canvas-wrapper">
-                <canvas id="signature-pad"></canvas>
+            <div class="w-full">
+                <div class="canvas-wrapper mb-6 relative">
+                    <canvas id="signature-pad"></canvas>
+                </div>
 
-                <!-- Floating Buttons -->
-                <div class="absolute bottom-4 left-4 right-4 flex justify-between items-center pointer-events-none">
+                <!-- Action Buttons (Moved outside canvas to prevent overlap) -->
+                <div class="flex flex-col sm:flex-row gap-4 items-stretch justify-center px-2">
                     <button id="clear-btn"
-                        class="pointer-events-auto bg-white/95 backdrop-blur border border-gray-200 text-gray-600 px-5 py-3 rounded-2xl text-sm font-bold shadow-lg active:scale-95 transition-transform flex items-center">
-                        <i class="fas fa-redo-alt mr-2"></i> ล้าง
+                        class="bg-white border-2 border-gray-200 text-gray-600 px-8 py-4 rounded-2xl text-lg font-bold shadow-md active:scale-95 transition-all flex items-center justify-center">
+                        <i class="fas fa-redo-alt mr-3"></i> ล้างข้อมูล
                     </button>
                     <button id="save-btn"
-                        class="pointer-events-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-4 rounded-2xl shadow-xl text-lg transition-all active:scale-[0.98] flex items-center">
-                        <i class="fas fa-check-circle mr-2"></i> ส่งลายเซ็น
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-5 rounded-2xl shadow-xl text-xl transition-all active:scale-[0.98] flex items-center justify-center">
+                        <i class="fas fa-check-circle mr-3"></i> ส่งลายเซ็นทันที
                     </button>
                 </div>
             </div>

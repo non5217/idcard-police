@@ -82,50 +82,58 @@ $theme = $themes[$ann_type] ?? $themes['warning'];
     <!-- Modal ประกาศหน้าแรก -->
     <?php if ($ann_enabled === 'on'): ?>
     <div id="announcementModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
-        <div class="<?= $theme['bg'] ?> border-2 <?= $theme['border'] ?> rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-[fadeIn_0.3s_ease-out]">
-            <button onclick="closeAnnouncement()" class="absolute top-4 right-4 <?= $theme['text'] ?> opacity-60 hover:opacity-100 transition">
+        <div
+            class="<?= $theme['bg']?> border-2 <?= $theme['border']?> rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-[fadeIn_0.3s_ease-out]">
+            <button onclick="closeAnnouncement()"
+                class="absolute top-4 right-4 <?= $theme['text']?> opacity-60 hover:opacity-100 transition">
                 <i class="fas fa-times text-xl"></i>
             </button>
-            
+
             <div class="text-center">
-                <div class="w-16 h-16 <?= $theme['icon_bg'] ?> rounded-full flex items-center justify-center mx-auto mb-4 border <?= $theme['border'] ?> border-opacity-30">
-                    <i class="<?= htmlspecialchars($ann_icon) ?> <?= $theme['icon_text'] ?> text-3xl"></i>
+                <div
+                    class="w-16 h-16 <?= $theme['icon_bg']?> rounded-full flex items-center justify-center mx-auto mb-4 border <?= $theme['border']?> border-opacity-30">
+                    <i class="<?= htmlspecialchars($ann_icon)?> <?= $theme['icon_text']?> text-3xl"></i>
                 </div>
-                
-                <h3 class="text-xl font-bold <?= $theme['text'] ?> mb-3">
-                    <?= htmlspecialchars($ann_title) ?>
+
+                <h3 class="text-xl font-bold <?= $theme['text']?> mb-3">
+                    <?= htmlspecialchars($ann_title)?>
                 </h3>
-                
-                <p class="<?= $theme['text'] ?> <?= htmlspecialchars($ann_fsize) ?> font-medium mb-2">
-                    <strong><?= nl2br(htmlspecialchars($ann_msg)) ?></strong>
+
+                <p class="<?= $theme['text']?> <?= htmlspecialchars($ann_fsize)?> font-medium mb-2">
+                    <strong>
+                        <?= nl2br(htmlspecialchars($ann_msg))?>
+                    </strong>
                 </p>
-                
+
                 <?php if ($ann_sub): ?>
-                <p class="<?= $theme['sub'] ?> text-sm mb-4">
-                    <?= htmlspecialchars($ann_sub) ?>
+                <p class="<?= $theme['sub']?> text-sm mb-4">
+                    <?= htmlspecialchars($ann_sub)?>
                 </p>
-                <?php endif; ?>
-                
+                <?php
+    endif; ?>
+
                 <?php if ($ann_box_title || $ann_box_text): ?>
-                <div class="<?= $theme['box'] ?> rounded-lg p-3 mb-4">
-                    <p class="<?= $theme['sub'] ?> text-sm font-bold">
+                <div class="<?= $theme['box']?> rounded-lg p-3 mb-4">
+                    <p class="<?= $theme['sub']?> text-sm font-bold">
                         <i class="fas fa-info-circle mr-1"></i>
-                        <?= htmlspecialchars($ann_box_title) ?>
+                        <?= htmlspecialchars($ann_box_title)?>
                     </p>
-                    <p class="<?= $theme['sub'] ?> text-sm mt-1">
-                        <?= htmlspecialchars($ann_box_text) ?>
+                    <p class="<?= $theme['sub']?> text-sm mt-1">
+                        <?= htmlspecialchars($ann_box_text)?>
                     </p>
                 </div>
-                <?php endif; ?>
-                
-                <button onclick="closeAnnouncement()" 
-                    class="<?= $theme['btn'] ?> text-white font-bold py-2 px-6 rounded-lg transition shadow-md">
+                <?php
+    endif; ?>
+
+                <button onclick="closeAnnouncement()"
+                    class="<?= $theme['btn']?> text-white font-bold py-2 px-6 rounded-lg transition shadow-md">
                     <i class="fas fa-check mr-2"></i>เข้าใจแล้ว
                 </button>
             </div>
         </div>
     </div>
-    <?php endif; ?>
+    <?php
+endif; ?>
 
     <script>
         function closeAnnouncement() {
@@ -346,7 +354,7 @@ $theme = $themes[$ann_type] ?? $themes['warning'];
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">เบอร์โทรศัพท์ที่ลงทะเบียน (10
+                    <label class="block text-gray-700 text-sm font-bold mb-2">เบอร์โทรศัพท์สำหรับลงทะเบียน (10
                         หลัก)</label>
                     <input type="text" name="phone_number" id="phone_input" required maxlength="10" inputmode="numeric"
                         oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="เช่น 0812345678"

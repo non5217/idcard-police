@@ -140,6 +140,27 @@ if (!empty($req['birth_date'])) {
             background-size: 20px 20px;
             background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
+
+        .cor-compare-info {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #059669;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background-color: #ecfdf5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #d1fae5;
+            width: fit-content;
+        }
+
+        .cor-compare-info.mismatch {
+            color: #dc2626;
+            background-color: #fef2f2;
+            border-color: #fee2e2;
+        }
     </style>
 </head>
 
@@ -222,11 +243,18 @@ endif; ?>
                 </div>
                 <?php
 else: ?>
-                <p class="text-xs text-gray-500 mb-4 bg-white p-2 rounded border inline-block">
-                    <i class="fas fa-info-circle text-blue-500"></i> เลขทะเบียนบัตรจะถูกสร้างอัตโนมัติเมื่อสถานะเป็น
-                    "รอพิมพ์บัตร"
-                </p>
-                <?php
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+                    <p class="text-xs text-gray-500 bg-white p-2 rounded border inline-block">
+                        <i class="fas fa-info-circle text-blue-500"></i> เลขทะเบียนบัตรจะถูกสร้างอัตโนมัติเมื่อสถานะเป็น
+                        "รอพิมพ์บัตร"
+                    </p>
+                    <button type="button" id="btn_fetch_cor" onclick="fetchCorComparison()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2 transition-all">
+                        <i class="fas fa-sync-alt"></i> เทียบข้อมูลกับฐานข้อมูล COR
+                    </button>
+                    <div id="cor_fetch_status" class="hidden text-[10px] text-blue-600 font-bold"></div>
+                </div>
+<?php
 endif; ?>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -274,6 +302,7 @@ endforeach; ?>
     endif;
 endforeach; ?>
                     </select>
+                    <div id="cor_rank_val" class="cor-compare-info hidden"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">ชื่อ (แยกคำนำหน้าออก)</label>
@@ -282,13 +311,15 @@ $parts = explode(' ', $req['full_name']);
 $fname = htmlspecialchars($parts[0] ?? '', ENT_QUOTES, 'UTF-8');
 $lname = htmlspecialchars($parts[1] ?? '', ENT_QUOTES, 'UTF-8');
 ?>
-                    <input type="text" name="first_name" value="<?= $fname?>" class="w-full border p-2 rounded bg-white"
+                    <input type="text" name="first_name" id="first_name_input" value="<?= $fname?>" class="w-full border p-2 rounded bg-white"
                         required>
+                    <div id="cor_fname_val" class="cor-compare-info hidden"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">นามสกุล</label>
-                    <input type="text" name="last_name" value="<?= $lname?>" class="w-full border p-2 rounded bg-white"
+                    <input type="text" name="last_name" id="last_name_input" value="<?= $lname?>" class="w-full border p-2 rounded bg-white"
                         required>
+                    <div id="cor_lname_val" class="cor-compare-info hidden"></div>
                 </div>
             </div>
 
@@ -298,6 +329,7 @@ $lname = htmlspecialchars($parts[1] ?? '', ENT_QUOTES, 'UTF-8');
                     <input type="text" id="edit_birth_date_th" value="<?= $dob_th?>"
                         class="w-full border p-2 rounded bg-white text-center tracking-widest" placeholder="วว/ดด/ปปปป">
                     <input type="hidden" name="birth_date" id="edit_birth_date_db" value="<?= $req['birth_date']?>">
+                    <div id="cor_dob_val" class="cor-compare-info hidden"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">อายุ</label>
@@ -307,18 +339,19 @@ $lname = htmlspecialchars($parts[1] ?? '', ENT_QUOTES, 'UTF-8');
                 </div>
                 <div>
                     <label class="block text-sm font-bold">เลขบัตร ปชช.</label>
-                    <input type="text" name="id_card_number" value="<?= $req['id_card_number']?>"
+                    <input type="text" name="id_card_number" id="id_card_num" value="<?= $req['id_card_number']?>"
                         class="w-full border p-2 rounded bg-gray-100" readonly>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">โทรศัพท์</label>
-                    <input type="text" name="phone"
+                    <input type="text" name="phone" id="phone_input"
                         value="<?= htmlspecialchars($req['phone'] ?? '', ENT_QUOTES, 'UTF-8')?>"
                         class="w-full border p-2 rounded bg-white">
+                    <div id="cor_phone_val" class="cor-compare-info hidden"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">หมู่โลหิต</label>
-                    <select name="blood_type" class="w-full border p-2 rounded bg-white">
+                    <select name="blood_type" id="blood_type_select" class="w-full border p-2 rounded bg-white">
                         <option value="">-</option>
                         <?php foreach (['O', 'A', 'B', 'AB'] as $b): ?>
                         <option value="<?= $b?>" <?=($req['blood_type'] ?? '') == $b ? 'selected' : ''?>>
@@ -327,6 +360,7 @@ $lname = htmlspecialchars($parts[1] ?? '', ENT_QUOTES, 'UTF-8');
                         <?php
 endforeach; ?>
                     </select>
+                    <div id="cor_blood_val" class="cor-compare-info hidden"></div>
                 </div>
             </div>
 
@@ -399,6 +433,7 @@ endforeach; ?>
                         <option value="GOV_EMP" <?= $req['officer_type'] == 'GOV_EMP' ? 'selected' : ''?>>พนักงานราชการ
                         </option>
                     </select>
+                    <div id="cor_otype_val" class="cor-compare-info hidden"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">ตำแหน่ง</label>
@@ -411,10 +446,11 @@ endforeach; ?>
                             <?php
 endforeach; ?>
                     </datalist>
+                    <div id="cor_pos_val" class="cor-compare-info hidden"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">สังกัด</label>
-                    <select name="org_id" class="w-full border p-2 rounded bg-white">
+                    <select name="org_id" id="org_id_select" class="w-full border p-2 rounded bg-white">
                         <?php foreach ($orgs as $o): ?>
                         <option value="<?= $o['id']?>" <?= $req['org_id'] == $o['id'] ? 'selected' : ''?>>
                             <?= $o['org_name']?>
@@ -422,6 +458,7 @@ endforeach; ?>
                         <?php
 endforeach; ?>
                     </select>
+                    <div id="cor_org_val" class="cor-compare-info hidden"></div>
                 </div>
             </div>
 
@@ -1119,7 +1156,103 @@ endif; ?>
                     $('#expire_date_db').val('');
                 }
             });
+
+            // 🟢 เรียกแสดงข้อมูลเทียบ COR อัตโนมัติเมื่อโหลดหน้า
+            setTimeout(fetchCorComparison, 1000);
         });
+
+        // ==========================================
+        // 🟢 ระบบเทียบข้อมูลกับ COR (Personnel Database)
+        // ==========================================
+        function fetchCorComparison() {
+            const idCard = document.getElementById('id_card_num').value;
+            const statusEl = document.getElementById('cor_fetch_status');
+            const btn = document.getElementById('btn_fetch_cor');
+
+            if (!idCard) return;
+
+            btn.disabled = true;
+            const oldBtnText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังเทียบข้อมูล...';
+            statusEl.classList.remove('hidden');
+            statusEl.textContent = '🔍 กำลังดึงข้อมูลจาก COR...';
+
+            fetch(`api/fetch_cor_officer.php?id_card=${idCard}`)
+                .then(res => res.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.innerHTML = oldBtnText;
+                    
+                    if (data.status === 'success' && data.data) {
+                        const cor = data.data;
+                        statusEl.textContent = '✅ เทียบข้อมูลสำเร็จ';
+                        statusEl.className = 'text-[10px] text-green-600 font-bold';
+
+                        updateCompareField('cor_rank_val', cor.rank_name, 'select[name="rank_id"] option:selected', true);
+                        updateCompareField('cor_fname_val', cor.first_name, '#first_name_input');
+                        updateCompareField('cor_lname_val', cor.last_name, '#last_name_input');
+                        updateCompareField('cor_dob_val', cor.birth_date_th, '#edit_birth_date_th');
+                        updateCompareField('cor_phone_val', cor.phone, '#phone_input');
+                        updateCompareField('cor_blood_val', cor.blood_type, '#blood_type_select');
+                        updateCompareField('cor_otype_val', cor.officer_type, 'select[name="officer_type"] option:selected', true);
+                        updateCompareField('cor_pos_val', cor.position_name, 'input[name="position"]');
+                        updateCompareField('cor_org_val', cor.org_name, '#org_id_select option:selected', true);
+                    } else {
+                        statusEl.textContent = '❌ ไม่พบข้อมูลใน COR';
+                        statusEl.className = 'text-[10px] text-red-600 font-bold';
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = oldBtnText;
+                    statusEl.textContent = '⚠️ ข้อผิดพลาดในการเชื่อมต่อ';
+                });
+        }
+
+        function updateCompareField(elementId, corValue, inputSelector, isSelectText = false) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            
+            let currentValue = '';
+            if (isSelectText) {
+                currentValue = $(inputSelector).text();
+            } else {
+                currentValue = $(inputSelector).val();
+            }
+
+            if (!corValue) {
+                el.classList.add('hidden');
+                return;
+            }
+
+            // 🟢 Mapping สำหรับประเภทเจ้าหน้าที่ (จาก Code เป็นภาษาไทย) เพื่อการเปรียบเทียบที่ถูกต้อง
+            const oTypeLabels = {
+                'POLICE': 'ข้าราชการตำรวจ',
+                'PERMANENT_EMP': 'ลูกจ้างประจำ',
+                'GOV_EMP': 'พนักงานราชการ'
+            };
+            
+            let displayCorValue = corValue;
+            // ถ้า corValue เป็นหนึ่งใน Code ประเภท จนท. ให้ใช้ภาษาไทยแทน
+            if (oTypeLabels[corValue]) {
+                displayCorValue = oTypeLabels[corValue];
+            }
+
+            el.innerHTML = `<i class="fas fa-database"></i> COR: ${displayCorValue}`;
+            el.classList.remove('hidden');
+
+            // Compare (Normalized)
+            let normCor = String(displayCorValue).trim();
+            const normCurrent = String(currentValue).trim();
+
+            if (normCor !== normCurrent && normCor !== '' && normCurrent !== '') {
+                // ข้อมูลไม่ตรงกัน
+                el.classList.add('mismatch');
+                el.innerHTML += ' <i class="fas fa-exclamation-circle text-[10px]"></i> (ไม่ตรง)';
+            } else {
+                el.classList.remove('mismatch');
+            }
+        }
 
         // ==========================================
         // 🟢 ระบบบันทึกงานเจ้าหน้าที่ (AJAX)

@@ -31,6 +31,7 @@ $issue_db = date('Y-m-d');
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สร้างคำขอใหม่ - Admin</title>
     <link rel="icon" type="image/png" href="https://portal.pathumthani.police.go.th/assets/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -700,6 +701,35 @@ endforeach; ?>
             let check = (11 - (sum % 11)) % 10;
             return check === parseInt(id.charAt(12));
         }
+
+        // --- เพิ่มระบบป้องกันการกดซ้ำ (Double-click prevention) ---
+        document.getElementById('createForm').addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            // ตรวจสอบความถูกต้องเบื้องต้น (เช่น ต้องมีรูป cropped)
+            const croppedPhoto = document.getElementById('cropped_photo_data').value;
+            const signatureData = document.getElementById('signature_data').value;
+            
+            if (!croppedPhoto || !signatureData) {
+                // Swal จะแจ้งเตือนอยู่แล้วหากเป็นฟิลด์ required (แต่รูปและลายเซ็นเราใช้ hidden input)
+                // ดังนั้นตรวจสอบและแจ้งเตือนถ้าลืม
+                if (!croppedPhoto) {
+                    Swal.fire('กรุณาเลือกและครอปรูปถ่าย', '', 'warning');
+                    e.preventDefault();
+                    return;
+                }
+                if (!signatureData) {
+                    Swal.fire('กรุณาอัปโหลดและครอปลายเซ็น', '', 'warning');
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> กำลังบันทึกข้อมูล...';
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        });
 
         // ================= Fetch COR Officer Data =================
         function fetchCorOfficerData() {

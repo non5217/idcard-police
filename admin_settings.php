@@ -519,6 +519,8 @@ $current_max_seq = (int)$stmt_max->fetchColumn();
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>ตั้งค่าระบบ - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -549,8 +551,8 @@ $current_max_seq = (int)$stmt_max->fetchColumn();
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                     <input type="hidden" name="action" value="add_signer">
                     <input type="hidden" name="signer_type" value="ISSUER">
-                    <div class="flex gap-2">
-                        <div class="w-1/3"><label class="text-sm font-bold">ยศ</label><input type="text"
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <div class="w-full sm:w-1/3"><label class="text-sm font-bold">ยศ</label><input type="text"
                                 name="rank_name" class="w-full border p-2 rounded" required></div>
                         <div class="flex-1"><label class="text-sm font-bold">ชื่อ-สกุล</label><input type="text"
                                 name="full_name" class="w-full border p-2 rounded" required></div>
@@ -696,13 +698,13 @@ endforeach; ?>
                 <h2 class="text-xl font-bold mb-4 text-green-800"><i class="fas fa-sitemap"></i> 3. จัดการหน่วยในสังกัด
                 </h2>
 
-                <form action="" method="POST" class="flex gap-2 mb-6">
+                <form action="" method="POST" class="flex flex-col sm:flex-row gap-2 mb-6">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token']?>">
                     <input type="hidden" name="action" value="add_org">
                     <input type="text" name="org_name" placeholder="ระบุชื่อหน่วยงานใหม่..."
-                        class="flex-1 border p-2 rounded" required>
+                        class="flex-1 border p-2 rounded text-sm" required>
                     <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold">+ เพิ่ม</button>
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold transition">+ เพิ่ม</button>
                 </form>
 
                 <div class="overflow-y-auto max-h-96 border rounded">

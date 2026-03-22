@@ -286,18 +286,19 @@ function renderTableRow($req, $index, $is_rejected = false)
 
     echo "<td class='py-4 px-5 text-center space-x-1 whitespace-nowrap'>";
 
-    echo "<a href='admin_edit.php?id={$req['id']}' class='inline-flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition' title='เปิดข้อมูล/ดำเนินการ'><i class='fas fa-search'></i> ตรวจสอบ</a> ";
+    echo "<div class='flex flex-wrap justify-center gap-2'>";
+    echo "<a href='admin_edit.php?id={$req['id']}' class='inline-flex items-center gap-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-medium shadow-sm transition' title='เปิดข้อมูล/ดำเนินการ'><i class='fas fa-search'></i> ตรวจสอบ</a> ";
 
     if (in_array($st, ['SENT_TO_PRINT', 'READY_PICKUP', 'COMPLETED'])) {
-        // 👮 เฉพาะ Super_Admin และ Admin เท่านั้นที่เห็นปุ่มพิมพ์
         if (isset($_SESSION['role']) && in_array($_SESSION['role'], ['Super_Admin', 'Admin'])) {
-            echo "<a href='admin_print_card.php?id={$req['id']}' class='inline-flex items-center gap-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition' title='พิมพ์บัตร'><i class='fas fa-print'></i> พิมพ์</a> ";
+            echo "<a href='admin_print_card.php?id={$req['id']}' class='inline-flex items-center gap-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-medium shadow-sm transition' title='พิมพ์บัตร'><i class='fas fa-print'></i> พิมพ์</a> ";
         }
     }
 
     if ($st === 'READY_PICKUP') {
-        echo "<button onclick='markAsCompleted({$req['id']})' class='inline-flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition mt-1 md:mt-0' title='เปลี่ยนสถานะเป็นรับบัตรแล้ว'><i class='fas fa-check-double'></i> ส่งมอบ</button>";
+        echo "<button onclick='markAsCompleted({$req['id']})' class='inline-flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-medium shadow-sm transition' title='เปลี่ยนสถานะเป็นรับบัตรแล้ว'><i class='fas fa-check-double'></i> ส่งมอบ</button>";
     }
+    echo "</div>";
 
     echo "</td>";
     echo "</tr>";
@@ -308,7 +309,8 @@ function renderTableRow($req, $index, $is_rejected = false)
 
 <head>
     <meta charset="UTF-8">
-    <title>ระบบจัดการคำขอ - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานและประวัติการใช้งาน - Admin</title>
     <link rel="icon" type="image/png" href="https://portal.pathumthani.police.go.th/assets/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -360,20 +362,70 @@ function renderTableRow($req, $index, $is_rejected = false)
             </a>
         </div>
 
+        <!-- 📊 บล็อกสรุปภาพรวม (Dashboard Stats) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <?php
+            // คำนวณยอดสรุปจากบล็อกต่างๆ
+            $sum_total = $total_found;
+            $sum_issued = ($block_results[2]['total'] ?? 0) + ($block_results[3]['total'] ?? 0) + ($block_results[4]['total'] ?? 0);
+            $sum_pending = ($block_results[0]['total'] ?? 0) + ($block_results[1]['total'] ?? 0);
+            $sum_rejected = $block_results[5]['total'] ?? 0;
+            ?>
+            <div
+                class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transform transition hover:scale-105">
+                <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">คำร้องทั้งหมด</div>
+                    <div class="text-2xl font-black text-blue-700"><?= number_format($sum_total)?></div>
+                </div>
+            </div>
+            <div
+                class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transform transition hover:scale-105">
+                <div class="w-12 h-12 rounded-xl bg-green-100 text-green-600 flex items-center justify-center text-xl">
+                    <i class="fas fa-id-card"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ออกบัตรไปแล้ว</div>
+                    <div class="text-2xl font-black text-green-700"><?= number_format($sum_issued)?></div>
+                </div>
+            </div>
+            <div
+                class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transform transition hover:scale-105">
+                <div class="w-12 h-12 rounded-xl bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">รอทำบัตร</div>
+                    <div class="text-2xl font-black text-yellow-600"><?= number_format($sum_pending)?></div>
+                </div>
+            </div>
+            <div
+                class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transform transition hover:scale-105">
+                <div class="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-xl">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ยื่นไม่ผ่าน/ยกเลิก</div>
+                    <div class="text-2xl font-black text-red-700"><?= number_format($sum_rejected)?></div>
+                </div>
+            </div>
+        </div>
+
         <div class="block-card p-5 rounded-2xl shadow-sm mb-8 border border-gray-200/60">
-            <form method="GET" class="flex flex-col md:flex-row gap-3 items-end">
+            <form method="GET" class="flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full md:w-auto">
                     <label
                         class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">ปีคำขอ</label>
                     <select name="filter_year"
-                        class="border border-gray-200 p-2.5 rounded-xl w-full md:w-32 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none bg-gray-50/50 text-sm">
+                        class="border border-gray-200 p-2.5 rounded-xl w-full md:w-32 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none bg-gray-50/50 text-sm font-bold">
                         <option value="">ทั้งหมด</option>
                         <?php foreach ($available_years as $y): ?>
                         <option value="<?= $y?>" <?= $filter_year == $y ? 'selected' : '' ?>>
                             <?= $y?>
                         </option>
-                        <?php
-endforeach; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="w-full md:flex-1">
@@ -390,13 +442,12 @@ endforeach; ?>
                 </div>
                 <div class="flex gap-2 w-full md:w-auto">
                     <button type="submit"
-                        class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-2.5 rounded-xl font-semibold shadow-sm transition flex-1 md:flex-none text-sm">ค้นหา</button>
+                        class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-2.5 rounded-xl font-bold shadow-sm transition flex-1 md:flex-none text-sm">ค้นหา</button>
                     <?php if ($search !== '' || $filter_year !== ''): ?>
                     <a href="admin_dashboard.php"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-semibold shadow-sm transition flex items-center justify-center text-sm"><i
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-bold shadow-sm transition flex items-center justify-center text-sm"><i
                             class="fas fa-times mr-1"></i> ล้าง</a>
-                    <?php
-endif; ?>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>

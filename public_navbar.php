@@ -12,8 +12,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <a href="index.php" class="flex items-center gap-3 group">
                 <img src="assets/logo.png" class="h-10 md:h-12 w-auto transform group-hover:scale-110 transition duration-300 drop-shadow-md" alt="โลโก้ตำรวจ" onerror="this.style.display='none'">
                 <div>
-                    <h1 class="text-lg md:text-xl font-bold leading-tight group-hover:text-yellow-300 transition">ระบบทำบัตรประจำตัวข้าราชการ | HR-ID Card</h1>
-                    <span class="text-xs text-blue-200 block">ตำรวจภูธรจังหวัดปทุมธานี</span>
+                    <h1 class="text-base md:text-xl font-bold leading-tight group-hover:text-yellow-300 transition">ระบบทำบัตรประจำตัวข้าราชการ <span class="hidden md:inline">| HR-ID Card</span></h1>
+                    <span class="text-[10px] md:text-xs text-blue-200 block">ตำรวจภูธรจังหวัดปทุมธานี</span>
                 </div>
             </a>
 

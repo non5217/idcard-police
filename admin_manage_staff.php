@@ -132,6 +132,7 @@ $staff_list = $stmt_staff->fetchAll(PDO::FETCH_ASSOC);
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>จัดการสิทธิ์เจ้าหน้าที่</title>
     <link rel="icon" type="image/png" href="https://portal.pathumthani.police.go.th/assets/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -152,9 +153,9 @@ $staff_list = $stmt_staff->fetchAll(PDO::FETCH_ASSOC);
             </div>
         <?php endif; ?>
 
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-3xl font-bold text-gray-800"><i class="fas fa-users-cog text-blue-700"></i> จัดการสิทธิ์เจ้าหน้าที่ (Manage Roles)</h2>
-            <a href="admin_dashboard.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow"><i class="fas fa-arrow-left"></i> กลับหน้า Dashboard</a>
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800"><i class="fas fa-users-cog text-blue-700"></i> จัดการสิทธิ์เจ้าหน้าที่</h2>
+            <a href="admin_dashboard.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-xl shadow font-semibold text-sm transition text-center"><i class="fas fa-arrow-left"></i> กลับ Dashboard</a>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

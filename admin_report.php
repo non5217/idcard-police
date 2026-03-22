@@ -101,6 +101,13 @@ foreach ($raw_data as $row) {
     $grand_defective += (int)$row['defective_total'];
 }
 
+// 🟢 2.1 ดึงสรุปสถานะทั้งหมด (สำหรับแดชบอร์ดหน้ารายงาน)
+$status_counts_raw = $conn->query("SELECT status, COUNT(*) as count FROM idcard_requests GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR);
+$total_all_req = array_sum($status_counts_raw);
+$total_issued = ($status_counts_raw['SENT_TO_PRINT'] ?? 0) + ($status_counts_raw['READY_PICKUP'] ?? 0) + ($status_counts_raw['COMPLETED'] ?? 0);
+$total_pending = ($status_counts_raw['PENDING_CHECK'] ?? 0) + ($status_counts_raw['PENDING_APPROVAL'] ?? 0);
+$total_rejected = $status_counts_raw['REJECTED'] ?? 0;
+
 // =========================================================
 // 🟢 3. ดึงข้อมูลประวัติการใช้งาน (Logs Tab)
 // =========================================================
@@ -178,6 +185,7 @@ function getActionBadge($type)
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>รายงานและประวัติการใช้งาน - Admin</title>
     <link rel="icon" type="image/png" href="https://portal.pathumthani.police.go.th/assets/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -220,6 +228,65 @@ function getActionBadge($type)
         </div>
 
         <div class="<?= $active_tab == 'report' ? 'block' : 'hidden'?> animate-[fadeIn_0.3s_ease-out]">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">ภาพรวมสถานะคำขอทั้งหมด</h2>
+            </div>
+
+            <!-- 📊 Status Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-blue-500 transform transition hover:scale-105">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">คำร้องทั้งหมด</p>
+                            <h3 class="text-3xl font-black text-blue-600 mt-1"><?= number_format($total_all_req) ?></h3>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-full text-blue-600">
+                            <i class="fas fa-file-alt fa-2x"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4">จำนวนการยื่นคำร้องรวมทุกสถานะ</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-green-500 transform transition hover:scale-105">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">ออกบัตรไปแล้ว</p>
+                            <h3 class="text-3xl font-black text-green-600 mt-1"><?= number_format($total_issued) ?></h3>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-full text-green-600">
+                            <i class="fas fa-id-card fa-2x"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4">พิมพ์บัตรแล้ว/รอรับ/รับบัตรแล้ว</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-yellow-500 transform transition hover:scale-105">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">รอทำบัตร</p>
+                            <h3 class="text-3xl font-black text-yellow-600 mt-1"><?= number_format($total_pending) ?></h3>
+                        </div>
+                        <div class="bg-yellow-100 p-3 rounded-full text-yellow-600">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4">รอตรวจสอบ และ รออนุมัติ</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-red-500 transform transition hover:scale-105">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">ยื่นไม่ผ่าน/ยกเลิก</p>
+                            <h3 class="text-3xl font-black text-red-600 mt-1"><?= number_format($total_rejected) ?></h3>
+                        </div>
+                        <div class="bg-red-100 p-3 rounded-full text-red-600">
+                            <i class="fas fa-times-circle fa-2x"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4">คำร้องที่ถูกปฏิเสธ หรือถูกยกเลิก</p>
+                </div>
+            </div>
+
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-800">สรุปจำนวนบัตรแยกตามปี พ.ศ. และประเภทบัตร</h2>
                 <div class="flex flex-col md:flex-row gap-3">

@@ -24,11 +24,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 
                 <?php if (isset($_SESSION['public_access'])): ?>
                     <a href="index.php?clear=1" onclick="return confirm('ข้อมูลที่กำลังทำรายการจะหายไป ต้องการยกเลิกและกลับหน้าหลักหรือไม่?');" 
-                       class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2 shadow-md">
+                       class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[12px] md:text-sm font-bold transition flex items-center gap-1.5 md:gap-2 shadow-md">
                         <i class="fas fa-sign-out-alt"></i> <span class="hidden md:inline">ยกเลิก / เริ่มใหม่</span><span class="md:hidden">ออก</span>
                     </a>
                 <?php else: ?>
-                    <a href="login.php" class="bg-blue-800 hover:bg-blue-700 border border-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold transition flex items-center gap-2 shadow-md">
+                    <a href="login.php" class="bg-blue-800 hover:bg-blue-700 border border-blue-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[12px] md:text-sm font-bold transition flex items-center gap-1.5 md:gap-2 shadow-md">
                         <i class="fas fa-user-shield"></i> <span class="hidden md:inline">สำหรับเจ้าหน้าที่</span><span class="md:hidden">เข้าสู่ระบบ</span>
                     </a>
                 <?php endif; ?>

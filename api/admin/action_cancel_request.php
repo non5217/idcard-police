@@ -20,7 +20,7 @@ if ($request_id <= 0) {
 
 try {
     // Confirm the request exists and isn't already cancelled
-    $stmt = $conn->prepare("SELECT id, id_card_number, full_name, status, line_user_id FROM idcard_requests WHERE id = ?");
+    $stmt = $conn->prepare("SELECT id, id_card_number, status FROM idcard_requests WHERE id = ?");
     $stmt->execute([$request_id]);
     $req = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -44,13 +44,10 @@ try {
     // Log the cancellation attempt
     saveLog($conn, 'CANCEL_REQUEST', "ยกเลิกคำขอ ID: $request_id (เลขบัตร: " . $req['id_card_number'] . ")", $request_id);
 
-    // 🟢 แจ้งเตือนทาง LINE (ถ้ามีการผูกไว้)
-    if (!empty($req['line_user_id'])) {
-        $msg = "📢 แจ้งเตือนสถานะการทำบัตร\n"
-             . "คุณ {$req['full_name']}\n"
-             . "ขณะนี้: คำขอของคุณถูกยกเลิกแล้ว";
-        sendLineMessage($req['line_user_id'], $msg);
-    }
+    // 🔔 Send LINE Notification
+    require_once '../../line_notify_helper.php';
+    $message = "❌ แจ้งเตือน: คำขอทำบัตรประชาชนตำรวจของคุณถูกยกเลิก\n\nID คำขอ: $request_id\nเลขบัตร: " . $req['id_card_number'] . "\n\nหากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่";
+    sendLineNotification($req['id_card_number'], $message);
 
     echo json_encode(['success' => true, 'message' => 'Request successfully cancelled.']);
 }

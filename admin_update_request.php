@@ -180,27 +180,22 @@ try {
     // 🟢 10. บันทึก Log ด้วยระบบใหม่
     saveLog($conn, 'ADMIN_EDIT', "แอดมินแก้ไขข้อมูลและอัปเดตสถานะคำขอของ $full_name (ID: $id)", $id, $old_data, $new_data);
 
-    // 🟢 11. ส่งการแจ้งเตือนทาง LINE (ถ้ามีการผูกไว้ และสถานะเปลี่ยน)
-    if (!empty($old_data['line_user_id']) && $status !== $old_data['status']) {
-        $status_labels = [
-            'PENDING_CHECK' => 'รอตรวจสอบ',
-            'PENDING_APPROVAL' => 'รออนุมัติ',
-            'SENT_TO_PRINT' => 'รอพิมพ์บัตร',
-            'READY_PICKUP' => 'บัตรเสร็จแล้ว (กรุณามารับบัตร)',
-            'COMPLETED' => 'รับบัตรเรียบร้อยแล้ว',
-            'REJECTED' => 'คำขอถูกปฏิเสธ'
+    // 🟢 11. ส่งการแจ้งเตือนทาง LINE (ถ้ามีการเปลี่ยนสถานะ และมีการเชื่อมต่อไว้)
+    if ($status !== $old_data['status']) {
+        require_once 'line_notify_helper.php';
+        $status_map = [
+            'PENDING_CHECK' => 'รอการตรวจสอบข้อมูล',
+            'PENDING_APPROVAL' => 'รอผู้กำกับอนุมัติ',
+            'REJECTED' => 'คำขอถูกปฏิเสธ (กรุณาตรวจสอบเหตุผล)',
+            'SENT_TO_PRINT' => 'ส่งเรื่องพิมพ์บัตรแล้ว',
+            'READY_PICKUP' => 'พิมพ์บัตรเสร็จแล้ว (พร้อมรับบัตร)',
+            'COMPLETED' => 'รับบัตรเรียบร้อยแล้ว'
         ];
-        $current_label = $status_labels[$status] ?? $status;
+        $label = $status_map[$status] ?? $status;
+        $id_card_raw = $old_data['id_card_number']; // ใช้จากข้อมูลเดิมที่ดึงมา
+        $message = "🔔 แจ้งเตือนสถานะบัตรประชาชนตำรวจ\n\nสถานะล่าสุดของคุณ: $label\n\nตรวจสอบรายละเอียดเพิ่มเติมได้ที่:\nhttps://portal.pathumthani.police.go.th/idcard/track_status.php";
         
-        $msg = "📢 แจ้งเตือนสถานะการทำบัตร\n"
-             . "คุณ {$full_name}\n"
-             . "สถานะเปลี่ยนเป็น: {$current_label}";
-        
-        if ($status === 'REJECTED' && !empty($reject_reason)) {
-            $msg .= "\nเหตุผล: {$reject_reason}";
-        }
-        
-        sendLineMessage($old_data['line_user_id'], $msg);
+        sendLineNotification($id_card_raw, $message);
     }
 
     // 🟢 12. ตรวจสอบ Action ว่าให้ไปหน้าไหนต่อ (Work-flow)

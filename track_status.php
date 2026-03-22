@@ -137,10 +137,8 @@ function getStatusBadge($status)
 }
 
 // 🟢 ฟังก์ชันสำหรับวาด Timeline
-function renderTimeline($req)
+function renderTimeline($current_status, $reject_reason = '')
 {
-    $current_status = $req['status'] ?? '';
-    $reject_reason = $req['reject_reason'] ?? '';
     $steps = [
         'PENDING_CHECK' => ['label' => 'รอตรวจสอบ', 'icon' => 'fas fa-file-signature'],
         'PENDING_APPROVAL' => ['label' => 'รออนุมัติ', 'icon' => 'fas fa-user-check'],
@@ -218,17 +216,6 @@ function renderTimeline($req)
 
         if ($is_current) {
             $html .= '<p class="text-[10px] sm:text-xs text-blue-600 mt-0.5">อยู่ระหว่างขั้นตอนนี้</p>';
-            
-            // เพิ่มปุ่มผูก LINE ถ้ายังไม่ได้ผูก
-            if (empty($req['line_user_id'])) {
-                $html .= '<div class="mt-3">';
-                $html .= '<a href="link_line.php?req_id='.$req['id'].'" class="inline-flex items-center gap-2 bg-[#00B900] hover:bg-[#009b00] text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-sm">';
-                $html .= '<i class="fab fa-line text-sm"></i> ติดตามสถานะผ่าน LINE';
-                $html .= '</a>';
-                $html .= '</div>';
-            } else {
-                $html .= '<p class="text-[9px] text-green-600 mt-2"><i class="fas fa-check-circle"></i> เชื่อมต่อกับ LINE แล้ว</p>';
-            }
         }
 
         $html .= '</div>';
@@ -298,7 +285,7 @@ function renderTimeline($req)
                             class="block sm:inline text-xs sm:text-sm font-normal sm:font-bold opacity-80">(มีอายุ 30
                             วัน)</span></span>
                 </div>
-                <div class="flex flex-col sm:flex-row shadow-sm gap-2 sm:gap-0">
+                <div class="flex flex-col sm:flex-row shadow-sm gap-2 sm:gap-0 mt-2">
                     <input type="text" id="shareUrlInput" value="<?= $share_url?>" readonly
                         class="bg-white border text-gray-700 text-base sm:text-sm rounded-lg sm:rounded-l-lg sm:rounded-tr-none focus:ring-blue-500 focus:border-blue-500 block w-full p-3 sm:p-2.5 outline-none font-mono">
                     <div class="flex w-full sm:w-auto gap-2 sm:gap-0 mt-1 sm:mt-0">
@@ -312,6 +299,44 @@ function renderTimeline($req)
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- 🔔 LINE Notification Linking -->
+            <?php
+            // Check if already linked
+            $stmt_line = $conn->prepare("SELECT id FROM idcard_line_subscriptions WHERE id_card_number = ? AND is_active = 1 LIMIT 1");
+            $stmt_line->execute([$id_card]);
+            $is_line_linked = $stmt_line->fetch();
+
+            if (isset($_SESSION['line_link_success'])) {
+                echo '<div class="bg-green-100 border border-green-200 text-green-800 p-4 rounded-lg mb-4 text-center animate-bounce">
+                        <i class="fas fa-check-circle mr-2"></i> <strong>สำเร็จ!</strong> เชื่อมต่อ LINE เพื่อรับแจ้งเตือนเรียบร้อยแล้ว
+                      </div>';
+                unset($_SESSION['line_link_success']);
+            }
+            ?>
+
+            <div class="bg-white border-2 border-dashed border-gray-200 rounded-xl p-4 sm:p-6 text-center">
+                <?php if ($is_line_linked): ?>
+                    <div class="text-green-600 font-bold flex flex-col items-center gap-2">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-xl">
+                            <i class="fab fa-line"></i>
+                        </div>
+                        <div>คุณได้เชื่อมต่อ LINE เพื่อรับการแจ้งเตือนแล้ว</div>
+                        <p class="text-xs text-gray-500 font-normal">ระบบจะส่งข้อความหาท่านเมื่อสถานะมีการเปลี่ยนแปลง</p>
+                    </div>
+                <?php else: ?>
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="text-gray-700 font-semibold text-sm sm:text-base">
+                            <i class="fas fa-bell text-yellow-500 mr-2"></i> ต้องการรับการแจ้งเตือนผ่าน LINE หรือไม่?
+                        </div>
+                        <p class="text-xs text-gray-500">หากสถานะบัตรมีการเปลี่ยนแปลง ระบบจะส่งข้อความแจ้งท่านทันที</p>
+                        <a href="line_login.php" 
+                           class="bg-[#00B900] hover:bg-[#009b00] text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-lg transition transform hover:scale-105 active:scale-95">
+                            <i class="fab fa-line text-2xl"></i> เชื่อมต่อ LINE รับแจ้งเตือนสถานะ
+                        </a>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <?php if (count($requests) > 0): ?>
@@ -356,11 +381,10 @@ endif; ?>
                 <!-- Card Body (Timeline) -->
                 <div class="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
 
-                    <!-- Timeline Section -->
-                <div class="mb-4">
-                    <h3 class="text-sm font-bold text-gray-700 mb-4 border-l-4 border-blue-600 pl-3">ขั้นตอนการดำเนินงาน</h3>
-                    <?= renderTimeline($req) ?>
-                </div>
+                    <!-- ฝั่งซ้าย: Timeline -->
+                    <div class="bg-white rounded-lg p-2">
+                        <?php renderTimeline($req['status'], $req['reject_reason'] ?? ''); ?>
+                    </div>
 
                     <!-- ฝั่งขวา: Action Buttons & Info -->
                     <div class="bg-blue-50/50 rounded-xl p-6 border border-blue-50 h-full flex flex-col justify-center">

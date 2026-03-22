@@ -251,6 +251,20 @@ try {
     // 🔔 ส่งแจ้งเตือน
     sendIDCardNotification($conn, $new_id);
 
+    // 🔔 ส่งแจ้งเตือนทาง LINE (ถ้ามีการเชื่อมต่อไว้)
+    require_once 'line_notify_helper.php';
+    $status_map = [
+        'PENDING_CHECK' => 'รอการตรวจสอบข้อมูล',
+        'PENDING_APPROVAL' => 'รอผู้กำกับอนุมัติ',
+        'REJECTED' => 'คำขอถูกปฏิเสธ (กรุณาตรวจสอบเหตุผล)',
+        'SENT_TO_PRINT' => 'ส่งเรื่องพิมพ์บัตรแล้ว',
+        'READY_PICKUP' => 'พิมพ์บัตรเสร็จแล้ว (พร้อมรับบัตร)',
+        'COMPLETED' => 'รับบัตรเรียบร้อยแล้ว'
+    ];
+    $label = $status_map[$status] ?? $status;
+    $line_message = "🔔 แจ้งเตือน: เจ้าหน้าที่ได้สร้างคำขอทำบัตรใหม่ให้คุณแล้ว\n\nสถานะ: $label\n\nตรวจสอบรายละเอียดเพิ่มเติมได้ที่:\nhttps://portal.pathumthani.police.go.th/idcard/track_status.php";
+    sendLineNotification($id_card_number, $line_message);
+
     echo "<!DOCTYPE html>
     <html lang='th'>
     <head>

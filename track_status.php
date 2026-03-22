@@ -149,11 +149,11 @@ function renderTimeline($current_status, $reject_reason = '')
 
     // กรณีถูกปฏิเสธ จะแสดง UI แบบพิเศษ
     if ($current_status === 'REJECTED') {
-        echo '<div class="relative pl-8 pb-4">';
+        echo '<div class="relative pl-6 sm:pl-8 pb-4">';
         echo '<div class="absolute left-3 top-2 h-full w-0.5 bg-red-200"></div>';
         echo '<div class="absolute left-0 top-1 w-6 h-6 rounded-full bg-red-500 border-4 border-white flex items-center justify-center shadow"><i class="fas fa-times text-white text-[10px]"></i></div>';
-        echo '<h4 class="font-bold text-red-600 mb-1">คำขอถูกปฏิเสธ</h4>';
-        echo '<div class="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm mt-2">';
+        echo '<h4 class="font-bold text-red-600 mb-1 text-sm sm:text-base">คำขอถูกปฏิเสธ</h4>';
+        echo '<div class="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-xs sm:text-sm mt-2">';
         echo '<strong>เหตุผล:</strong> ' . htmlspecialchars($reject_reason);
         echo '</div>';
         echo '</div>';
@@ -166,7 +166,7 @@ function renderTimeline($current_status, $reject_reason = '')
     if ($current_index === false)
         $current_index = -1; // Fallback for unknown status
 
-    $html = '<div class="relative pl-8 space-y-6">';
+    $html = '<div class="relative pl-6 sm:pl-8 space-y-4 sm:space-y-6">';
 
     foreach ($status_keys as $index => $key) {
         $step = $steps[$key];
@@ -194,7 +194,7 @@ function renderTimeline($current_status, $reject_reason = '')
         $html .= '<div class="relative">';
         // เส้นเชื่อมแนวตั้ง (ถ้าไม่ใช่อันสุดท้าย)
         if (!$is_last) {
-            $html .= '<div class="absolute left-3 top-8 bottom-[-24px] w-0.5 ' . $lineColor . '"></div>';
+            $html .= '<div class="absolute left-3 top-7 bottom-[-20px] sm:bottom-[-24px] w-0.5 ' . $lineColor . '"></div>';
         }
 
         // วงกลมจุดสถานะ
@@ -210,12 +210,12 @@ function renderTimeline($current_status, $reject_reason = '')
         // เนื้อหา
         $html .= '<div class="pl-8">';
         $html .= '<div class="flex items-center gap-2 ' . $textColor . '">';
-        $html .= '<i class="' . $step['icon'] . ' text-lg sm:text-base ' . ($is_current ? 'text-blue-500' : $iconColor) . '"></i>';
-        $html .= '<span class="text-base sm:text-sm font-semibold sm:font-normal">' . $step['label'] . '</span>';
+        $html .= '<i class="' . $step['icon'] . ' text-base ' . ($is_current ? 'text-blue-500' : $iconColor) . '"></i>';
+        $html .= '<span class="text-sm sm:text-sm font-semibold">' . $step['label'] . '</span>';
         $html .= '</div>';
 
         if ($is_current) {
-            $html .= '<p class="text-xs sm:text-sm text-blue-600 mt-1">อยู่ระหว่างขั้นตอนนี้</p>';
+            $html .= '<p class="text-[10px] sm:text-xs text-blue-600 mt-0.5">อยู่ระหว่างขั้นตอนนี้</p>';
         }
 
         $html .= '</div>';
@@ -232,6 +232,7 @@ function renderTimeline($current_status, $reject_reason = '')
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สถานะคำขอ - Police ID Card</title>
     <link rel="icon" type="image/png" href="https://portal.pathumthani.police.go.th/assets/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -256,44 +257,44 @@ function renderTimeline($current_status, $reject_reason = '')
 <body class="bg-gray-100 min-h-screen pb-12">
     <?php include 'public_navbar.php'; ?>
 
-    <div class="max-w-4xl mx-auto mt-4 md:mt-6 px-3 sm:px-4">
+    <div class="max-w-4xl mx-auto mt-6 px-4">
         <div
-            class="bg-blue-900 text-white p-4 md:p-5 rounded-t-xl flex flex-col sm:flex-row justify-between items-center gap-3 md:gap-2 text-center sm:text-left shadow-md">
-            <h1 class="text-lg md:text-2xl font-bold"><i class="fas fa-search-location mr-2"></i> ผลการค้นหาสถานะ</h1>
+            class="bg-yellow-600 text-white p-5 rounded-t-xl flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-2 text-center sm:text-left shadow-md">
+            <h1 class="text-xl sm:text-2xl font-bold"><i class="fas fa-search-location mr-2"></i> ผลการค้นหาสถานะ</h1>
             <a href="index.php"
-                class="bg-blue-800 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition text-sm w-full sm:w-auto text-center border border-blue-700 shadow-sm">
+                class="bg-yellow-700 hover:bg-yellow-800 px-4 py-2 rounded-lg font-semibold transition text-sm w-full sm:w-auto text-center">
                 <i class="fas fa-home mr-1"></i> กลับหน้าหลัก
             </a>
         </div>
 
-        <div class="bg-white p-5 md:p-6 shadow-md rounded-b-xl border-t-0 mb-6 md:mb-8">
+        <div class="bg-white p-6 shadow-md rounded-b-xl border-t-0 mb-8">
             <div class="text-center">
-                <div class="text-gray-500 text-[10px] md:text-sm font-bold uppercase tracking-widest mb-1.5 opacity-70">
+                <div class="text-gray-500 text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1">
                     เลขประจำตัวประชาชน</div>
                 <div
-                    class="text-xl md:text-3xl font-bold text-gray-800 tracking-widest bg-gray-50 inline-block px-5 md:px-6 py-2.5 md:py-2 rounded-xl border mb-6 break-all shadow-inner">
+                    class="text-2xl sm:text-3xl font-bold text-gray-800 tracking-widest bg-gray-50 inline-block px-4 sm:px-6 py-2 rounded-lg border mb-6 break-all">
                     <?= htmlspecialchars($id_card)?>
                 </div>
             </div>
 
             <!-- Share Link Input Box -->
-            <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-3.5 md:p-4 mb-2">
-                <div class="mb-3 md:mb-2 text-sm font-bold text-blue-900 flex items-start md:items-center gap-2">
-                    <i class="fas fa-share-alt text-blue-500 mt-1 md:mt-0"></i>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
+                <div class="mb-3 sm:mb-2 text-sm font-bold text-blue-800 flex items-start sm:items-center gap-2">
+                    <i class="fas fa-share-alt mt-1 sm:mt-0"></i>
                     <span>ลิงก์สำหรับส่งต่อหรือติดตามสถานะ <span
-                            class="block md:inline text-[11px] md:text-sm font-normal md:font-semibold opacity-70">(มีอายุ 30
+                            class="block sm:inline text-xs sm:text-sm font-normal sm:font-bold opacity-80">(มีอายุ 30
                             วัน)</span></span>
                 </div>
-                <div class="flex flex-col md:flex-row shadow-sm gap-2 md:gap-0 mt-2">
+                <div class="flex flex-col sm:flex-row shadow-sm gap-2 sm:gap-0">
                     <input type="text" id="shareUrlInput" value="<?= $share_url?>" readonly
-                        class="bg-white border-blue-200 text-gray-700 text-sm md:text-sm rounded-lg md:rounded-l-xl md:rounded-tr-none focus:ring-blue-500 focus:border-blue-500 block w-full p-3 font-mono">
-                    <div class="flex w-full md:w-auto gap-2 md:gap-0">
+                        class="bg-white border text-gray-700 text-base sm:text-sm rounded-lg sm:rounded-l-lg sm:rounded-tr-none focus:ring-blue-500 focus:border-blue-500 block w-full p-3 sm:p-2.5 outline-none font-mono">
+                    <div class="flex w-full sm:w-auto gap-2 sm:gap-0 mt-1 sm:mt-0">
                         <button type="button" onclick="copyShareLink()"
-                            class="flex-1 md:flex-none text-white bg-blue-600 hover:bg-blue-700 font-bold text-sm px-4 py-3 md:py-2.5 transition rounded-lg md:rounded-none md:border-r border-blue-500 flex items-center justify-center gap-2">
+                            class="flex-1 sm:flex-none text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-bold sm:font-medium text-base sm:text-sm px-4 py-3 sm:py-2.5 text-center transition rounded-lg sm:rounded-none sm:border-r border-blue-500">
                             <i class="fas fa-copy"></i> คัดลอก
                         </button>
                         <button type="button" onclick="shareToLine()"
-                            class="flex-1 md:flex-none text-white bg-[#00B900] hover:bg-[#009b00] font-bold text-sm px-4 py-3 md:py-2.5 transition rounded-lg md:rounded-r-xl md:rounded-bl-none flex items-center justify-center gap-2">
+                            class="flex-1 sm:flex-none text-white bg-[#00B900] hover:bg-[#009b00] focus:ring-4 focus:outline-none focus:ring-green-300 font-bold sm:font-medium text-base sm:text-sm px-4 py-3 sm:py-2.5 text-center transition rounded-lg sm:rounded-r-lg sm:rounded-bl-none">
                             <i class="fab fa-line text-lg"></i> ส่งไลน์
                         </button>
                     </div>
@@ -301,13 +302,13 @@ function renderTimeline($current_status, $reject_reason = '')
             </div>
 
             <?php if (count($requests) > 0): ?>
-            <div class="mt-4 text-center text-gray-500 text-xs md:text-sm font-medium">
-                พบประวัติคำขอทั้งหมด <span class="font-black text-blue-700 text-base md:text-lg">
+            <div class="mt-4 text-center text-gray-600">
+                พบประวัติคำขอทั้งหมด <span class="font-bold text-blue-600 text-lg">
                     <?= count($requests)?>
                 </span> รายการ
             </div>
-            <?php endif; ?>
-        </div>
+            <?php
+endif; ?>
         </div>
 
         <?php if (count($requests) > 0): ?>
@@ -317,27 +318,24 @@ function renderTimeline($current_status, $reject_reason = '')
 
                 <!-- Card Header -->
                 <div
-                    class="bg-gray-50/80 px-4 md:px-6 py-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div class="w-full md:w-auto flex flex-col items-start">
-                        <div class="flex items-center gap-2 mb-2">
-                             <span class="bg-blue-600 text-white text-[10px] md:text-xs font-black px-2.5 py-1 rounded shadow-sm">
-                                คำขอใหม่
-                             </span>
-                             <span class="text-blue-800 text-xs md:text-sm font-bold font-mono">
-                                #<?= sprintf('%04d/%s', $req['id'], $req['request_year'] ?? (date('Y', strtotime($req['created_at'])) + 543))?>
-                             </span>
-                        </div>
-                        <h3 class="text-lg md:text-xl font-bold text-gray-800 line-clamp-2 leading-tight">
+                    class="bg-gray-50 px-4 sm:px-6 py-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+                    <div class="w-full sm:w-auto flex flex-col items-start">
+                        <span
+                            class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide font-mono mb-2 sm:mb-0">
+                            คำขอเลขที่:
+                            <?= sprintf('%04d/%s', $req['id'], $req['request_year'] ?? (date('Y', strtotime($req['created_at'])) + 543))?>
+                        </span>
+                        <h3 class="text-lg sm:text-lg font-bold text-gray-800 mt-2 sm:mt-2 line-clamp-2">
                             <?= htmlspecialchars($req['rank_name'] . $req['full_name'])?>
                         </h3>
-                        <p class="text-[12px] md:text-sm text-gray-400 mt-2 font-medium">
-                            <i class="far fa-calendar-alt mr-1"></i> ยื่นคำร้องเมื่อ:
-                            <?= date('d/m/Y H:i', strtotime($req['created_at']))?> น.
+                        <p class="text-sm sm:text-sm text-gray-500 mt-1">
+                            <i class="far fa-calendar-alt mr-1"></i> ยื่นเมื่อ:
+                            <?= date('d/m/Y H:i', strtotime($req['created_at']))?>
                         </p>
                     </div>
                     <div
-                        class="w-full md:w-auto flex items-center justify-between md:flex-col md:items-end md:justify-center border-t md:border-t-0 pt-4 md:pt-0 border-gray-100">
-                        <div class="text-[11px] md:text-xs text-gray-400 font-bold uppercase tracking-wider md:mb-1">สถานะปัจจุบัน</div>
+                        class="w-full sm:w-auto flex items-center justify-between sm:block border-t sm:border-t-0 pt-3 sm:pt-0 mt-2 sm:mt-0">
+                        <div class="text-xs sm:text-sm text-gray-500 font-semibold sm:mb-2">สถานะระบบ:</div>
                         <?= getStatusBadge($req['status'])?>
                     </div>
                 </div>
@@ -346,29 +344,27 @@ function renderTimeline($current_status, $reject_reason = '')
                 <div class="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
 
                     <!-- ฝั่งซ้าย: Timeline -->
-                    <div class="bg-white rounded-lg p-0 md:p-2">
+                    <div class="bg-white rounded-lg p-2">
                         <?php renderTimeline($req['status'], $req['reject_reason'] ?? ''); ?>
                     </div>
 
                     <!-- ฝั่งขวา: Action Buttons & Info -->
-                    <div class="bg-blue-50/40 rounded-xl p-5 md:p-6 border border-blue-50/50 h-full flex flex-col justify-center">
-                        <h4 class="font-bold text-gray-800 mb-4 border-b border-blue-100 pb-2 flex items-center gap-2">
-                            <i class="fas fa-info-circle text-blue-500"></i>
-                            <span class="text-sm md:text-base uppercase tracking-wider">ข้อมูลเพิ่มเติม</span>
-                        </h4>
+                    <div class="bg-blue-50/50 rounded-xl p-6 border border-blue-50 h-full flex flex-col justify-center">
+                        <h4 class="font-bold text-gray-800 mb-4 border-b pb-2"><i
+                                class="fas fa-info-circle text-blue-500 mr-2"></i> ข้อมูลเพิ่มเติม</h4>
 
-                        <div class="space-y-4 md:space-y-3 text-sm text-gray-700 mb-6 flex-grow">
-                            <div class="flex flex-col md:flex-row md:justify-between gap-1.5 md:gap-0">
-                                <span class="text-gray-400 font-bold md:font-semibold text-[11px] md:text-xs uppercase tracking-tight">เหตุผลการขอ:</span>
+                        <div class="space-y-4 sm:space-y-3 text-base sm:text-sm text-gray-700 mb-6 flex-grow">
+                            <div class="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                                <span class="text-gray-500 font-semibold sm:font-normal">เหตุผลการขอ:</span>
                                 <span
-                                    class="font-bold md:font-bold text-left md:text-right text-blue-900 md:text-gray-800 max-w-full md:max-w-[70%] bg-blue-100/50 md:bg-transparent px-3 py-2 md:p-0 rounded-lg md:rounded-none border md:border-0 border-blue-200/50 md:border-transparent">
+                                    class="font-bold sm:font-semibold text-left sm:text-right text-blue-800 sm:text-gray-800 max-w-full sm:max-w-[70%] bg-blue-50 sm:bg-transparent p-2 sm:p-0 rounded-md sm:rounded-none">
                                     <?= getReasonText($req)?>
                                 </span>
                             </div>
                             <?php if (!empty($req['old_card_number'])): ?>
-                            <div class="flex flex-col md:flex-row md:justify-between gap-1 md:gap-0 border-t md:border-0 pt-3 md:pt-0 border-dashed border-gray-200">
-                                <span class="text-gray-400 font-bold md:font-semibold text-[11px] md:text-xs uppercase tracking-tight">เลขบัตรเดิม:</span>
-                                <span class="font-black md:font-semibold text-gray-800 md:text-gray-900">
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">เลขบัตรเดิม:</span>
+                                <span class="font-semibold text-right">
                                     <?= htmlspecialchars($req['old_card_number'])?>
                                 </span>
                             </div>
@@ -387,17 +383,15 @@ function renderTimeline($current_status, $reject_reason = '')
                                 <input type="hidden" name="action" value="edit_request">
                                 <input type="hidden" name="request_id" value="<?= $req['id']?>">
                                 <button type="submit"
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 group active:scale-[0.98]">
-                                    <i class="fas fa-edit group-hover:rotate-12 transition-transform"></i>
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition flex items-center justify-center gap-2 group">
+                                    <i class="fas fa-edit group-hover:scale-110 transition-transform"></i>
                                     แก้ไขข้อมูลคำขอนี้
                                 </button>
                             </form>
-                            <div class="bg-yellow-50 border border-yellow-200/50 rounded-lg p-3 mt-4 flex items-start gap-2.5">
-                                <i class="fas fa-exclamation-triangle text-yellow-600 text-[10px] mt-1"></i>
-                                <span class="text-[11px] leading-relaxed text-yellow-800 font-medium text-center w-full">
-                                    หากมีการแก้ไขและบันทึกใหม่ สถานะจะกลับไปเป็น <span class="font-bold underline">'รอตรวจสอบ'</span> เท่านั้น
-                                </span>
-                            </div>
+                            <p class="text-xs text-center text-gray-500 mt-3 flex items-start justify-center gap-1">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5"></i>
+                                หากบันทึกใหม่ สถานะจะกลับไป<br>เป็น 'รอตรวจสอบ' เท่านั้น
+                            </p>
                         </div>
                         <?php
         else: ?>
@@ -450,8 +444,8 @@ endif; ?>
                     confirmButtonColor: '#2563eb'
                 });
             }).catch(err => {
-                crroopy: ', err);
-      กิดข้อผิดพลาด', 'ไม่สามารถคัดลอกลิงก์ได้ กรุณาลองใหม่', 'error');
+                console.error('Copy failed: ', err);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถคัดลอกลิงก์ได้ กรุณาลองใหม่', 'error');
             });
         }
 

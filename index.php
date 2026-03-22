@@ -143,54 +143,26 @@ endif; ?>
     </script>
 
     <main class="flex-grow p-4 md:p-6 lg:py-12 flex flex-col items-center">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
+        <!-- 📜 Section: เอกสารที่ต้องเตรียม (ย้ายมาไว้ด้านบน) -->
+        <div class="max-w-6xl w-full mb-8 bg-white rounded-xl shadow-lg p-5 md:p-8 border-t-4 border-indigo-500">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6 text-center">
+                <i class="fas fa-file-alt text-indigo-500 mr-2"></i> เอกสารที่ต้องเตรียมก่อนยื่นคำขอ
+            </h2>
 
-            <div onclick="openPdpaModal()"
-                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-blue-500">
-                <div
-                    class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-                    <i class="fas fa-id-card text-4xl"></i>
-                </div>
-                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">ขอมีบัตร/เปลี่ยนบัตร</h2>
-                <p class="text-gray-500">สำหรับข้าราชการตำรวจที่ต้องการ<br>ทำบัตรใหม่ หรือเปลี่ยนบัตรเดิม</p>
-                <button class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 w-full">
-                    คลิกเพื่อดำเนินการ
+            <!-- Mobile View: Small Buttons (ลดขนาดตามสั่ง) -->
+            <div class="flex md:hidden gap-3 justify-center mb-2">
+                <button onclick="showDocModal('NEW')" class="flex-1 bg-blue-50 text-blue-700 py-3 px-2 rounded-xl font-bold border border-blue-200 shadow-sm flex flex-col items-center gap-1 active:scale-95 transition">
+                    <i class="fas fa-id-badge text-xl text-blue-600"></i>
+                    <span class="text-[11px]">กรณีทำบัตรใหม่</span>
+                </button>
+                <button onclick="showDocModal('UPDATE')" class="flex-1 bg-amber-50 text-amber-800 py-3 px-2 rounded-xl font-bold border border-amber-200 shadow-sm flex flex-col items-center gap-1 active:scale-95 transition">
+                    <i class="fas fa-sync-alt text-xl text-amber-600"></i>
+                    <span class="text-[11px]">เปลี่ยนบัตร/หาย</span>
                 </button>
             </div>
 
-            <div onclick="openModal('TRACK')"
-                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-yellow-500">
-                <div
-                    class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-600">
-                    <i class="fas fa-search text-4xl"></i>
-                </div>
-                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">ติดตามสถานะ</h2>
-                <p class="text-gray-500">ตรวจสอบความคืบหน้าของคำขอ<br>หรือสถานะการจัดพิมพ์บัตร</p>
-                <button
-                    class="mt-6 bg-yellow-500 text-white px-6 py-2 rounded-full font-bold hover:bg-yellow-600 w-full">
-                    ตรวจสอบสถานะ
-                </button>
-            </div>
-
-            <a href="login.php"
-                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-red-500 block">
-                <div
-                    class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 text-red-600">
-                    <i class="fa-solid fa-user-lock text-4xl"></i>
-                </div>
-                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">Admin</h2>
-                <p class="text-gray-500">เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ออกบัตร<br>และอนุมัติการออกบัตร</p>
-                <span class="mt-6 bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full block">
-                    เข้าสู่ระบบ SSO
-                </span>
-            </a>
-
-        </div>
-        <div class="max-w-6xl w-full mt-10 bg-white rounded-xl shadow-lg p-6 md:p-8 border-t-4 border-indigo-500">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center"><i
-                    class="fas fa-file-alt text-indigo-500 mr-2"></i> เอกสารที่ต้องเตรียมก่อนยื่นคำขอ</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Desktop View: Full Detail Grid -->
+            <div class="hidden md:grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-blue-50 rounded-lg p-6 border border-blue-100 shadow-sm">
                     <h3 class="text-lg font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2">
                         <i class="fas fa-id-badge mr-2"></i> กรณีทำบัตรใหม่ (ครั้งแรก)
@@ -239,6 +211,50 @@ endif; ?>
                     </ul>
                 </div>
             </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
+
+            <div onclick="openPdpaModal()"
+                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-blue-500">
+                <div
+                    class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
+                    <i class="fas fa-id-card text-4xl"></i>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">ขอมีบัตร/เปลี่ยนบัตร</h2>
+                <p class="text-gray-500">สำหรับข้าราชการตำรวจที่ต้องการ<br>ทำบัตรใหม่ หรือเปลี่ยนบัตรเดิม</p>
+                <button class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 w-full">
+                    คลิกเพื่อดำเนินการ
+                </button>
+            </div>
+
+            <div onclick="openModal('TRACK')"
+                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-yellow-500">
+                <div
+                    class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-600">
+                    <i class="fas fa-search text-4xl"></i>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">ติดตามสถานะ</h2>
+                <p class="text-gray-500">ตรวจสอบความคืบหน้าของคำขอ<br>หรือสถานะการจัดพิมพ์บัตร</p>
+                <button
+                    class="mt-6 bg-yellow-500 text-white px-6 py-2 rounded-full font-bold hover:bg-yellow-600 w-full">
+                    ตรวจสอบสถานะ
+                </button>
+            </div>
+
+            <a href="login.php"
+                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-red-500 block">
+                <div
+                    class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 text-red-600">
+                    <i class="fa-solid fa-user-lock text-4xl"></i>
+                </div>
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">Admin</h2>
+                <p class="text-gray-500">เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ออกบัตร<br>และอนุมัติการออกบัตร</p>
+                <span class="mt-6 bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full block">
+                    เข้าสู่ระบบ SSO
+                </span>
+            </a>
+
         </div>
     </main>
 
@@ -375,6 +391,52 @@ endif; ?>
     </div>
 
     <script>
+        function showDocModal(type) {
+            let title = '';
+            let content = '';
+            let icon = 'info';
+            
+            if(type === 'NEW') {
+                title = 'เอกสาร: กรณีทำบัตรใหม่ (ครั้งแรก)';
+                icon = 'info';
+                content = `
+                    <div class="text-left font-sarabun">
+                        <ul class="space-y-3">
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 1. สำเนาคำสั่งแต่งตั้ง</li>
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 2. สำเนาทะเบียนบ้าน</li>
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 3. หนังสือยืนยันกรุ๊ปเลือด (ใบรับรองแพทย์)</li>
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 4. รูปถ่าย</li>
+                        </ul>
+                    </div>
+                `;
+            } else {
+                title = 'เอกสาร: กรณีเปลี่ยน/หาย/หมดอายุ';
+                icon = 'warning';
+                content = `
+                    <div class="text-left font-sarabun">
+                        <ul class="space-y-3">
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 1. สำเนาคำสั่งแต่งตั้ง (ถ้ามี)</li>
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 2. สำเนาทะเบียนบ้าน</li>
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 3. รูปถ่าย</li>
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 4. บัตรเก่า (ถ้ามี)</li>
+                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 5. ใบแจ้งความ (กรณีบัตรหาย)</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
+            Swal.fire({
+                title: title,
+                html: content,
+                icon: icon,
+                confirmButtonText: 'รับทราบ',
+                confirmButtonColor: '#3085d6',
+                customClass: {
+                    container: 'font-sarabun'
+                }
+            });
+        }
+
         function openPdpaModal() {
             document.getElementById('pdpaModal').classList.remove('hidden');
             document.getElementById('pdpaCheckbox').checked = false;

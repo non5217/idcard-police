@@ -209,8 +209,10 @@ endif; ?>
                     <i class="fas fa-id-card text-2xl md:text-4xl"></i>
                 </div>
                 <h2 class="text-lg md:text-2xl font-bold text-gray-800 mb-1 md:mb-2">ขอมีบัตร/เปลี่ยนบัตร</h2>
-                <p class="text-xs md:text-base text-gray-500 hidden md:block">สำหรับข้าราชการตำรวจที่ต้องการ<br>ทำบัตรใหม่ หรือเปลี่ยนบัตรเดิม</p>
-                <button class="mt-4 md:mt-6 bg-blue-600 text-white px-5 py-2 rounded-full text-sm md:text-base font-bold hover:bg-blue-700 w-full shadow-md">
+                <p class="text-xs md:text-base text-gray-500 hidden md:block">
+                    สำหรับข้าราชการตำรวจที่ต้องการ<br>ทำบัตรใหม่ หรือเปลี่ยนบัตรเดิม</p>
+                <button
+                    class="mt-4 md:mt-6 bg-blue-600 text-white px-5 py-2 rounded-full text-sm md:text-base font-bold hover:bg-blue-700 w-full shadow-md">
                     คลิกเพื่อดำเนินการ
                 </button>
             </div>
@@ -222,7 +224,8 @@ endif; ?>
                     <i class="fas fa-search text-2xl md:text-4xl"></i>
                 </div>
                 <h2 class="text-lg md:text-2xl font-bold text-gray-800 mb-1 md:mb-2">ติดตามสถานะ</h2>
-                <p class="text-xs md:text-base text-gray-500 hidden md:block">ตรวจสอบความคืบหน้าของคำขอ<br>หรือสถานะการจัดพิมพ์บัตร</p>
+                <p class="text-xs md:text-base text-gray-500 hidden md:block">
+                    ตรวจสอบความคืบหน้าของคำขอ<br>หรือสถานะการจัดพิมพ์บัตร</p>
                 <button
                     class="mt-4 md:mt-6 bg-yellow-500 text-white px-5 py-2 rounded-full text-sm md:text-base font-bold hover:bg-yellow-600 w-full shadow-md">
                     ตรวจสอบสถานะ
@@ -356,7 +359,7 @@ endif; ?>
                 <div class="grid grid-cols-2 gap-4 pt-2">
                     <button type="submit" id="submitBtn"
                         class="w-full bg-blue-900 text-white font-bold py-3 rounded hover:bg-blue-800 transition col-span-2">
-                        ตกลง / ยืนยัน
+                        ยืนคำร้องขอมีบัตร
                     </button>
                 </div>
             </form>

@@ -137,8 +137,10 @@ function getStatusBadge($status)
 }
 
 // 🟢 ฟังก์ชันสำหรับวาด Timeline
-function renderTimeline($current_status, $reject_reason = '')
+function renderTimeline($req)
 {
+    $current_status = $req['status'] ?? '';
+    $reject_reason = $req['reject_reason'] ?? '';
     $steps = [
         'PENDING_CHECK' => ['label' => 'รอตรวจสอบ', 'icon' => 'fas fa-file-signature'],
         'PENDING_APPROVAL' => ['label' => 'รออนุมัติ', 'icon' => 'fas fa-user-check'],
@@ -216,6 +218,17 @@ function renderTimeline($current_status, $reject_reason = '')
 
         if ($is_current) {
             $html .= '<p class="text-[10px] sm:text-xs text-blue-600 mt-0.5">อยู่ระหว่างขั้นตอนนี้</p>';
+            
+            // เพิ่มปุ่มผูก LINE ถ้ายังไม่ได้ผูก
+            if (empty($req['line_user_id'])) {
+                $html .= '<div class="mt-3">';
+                $html .= '<a href="link_line.php?req_id='.$req['id'].'" class="inline-flex items-center gap-2 bg-[#00B900] hover:bg-[#009b00] text-white text-[10px] sm:text-xs px-3 py-1.5 rounded-lg font-bold transition shadow-sm">';
+                $html .= '<i class="fab fa-line text-sm"></i> ติดตามสถานะผ่าน LINE';
+                $html .= '</a>';
+                $html .= '</div>';
+            } else {
+                $html .= '<p class="text-[9px] text-green-600 mt-2"><i class="fas fa-check-circle"></i> เชื่อมต่อกับ LINE แล้ว</p>';
+            }
         }
 
         $html .= '</div>';
@@ -343,10 +356,11 @@ endif; ?>
                 <!-- Card Body (Timeline) -->
                 <div class="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
 
-                    <!-- ฝั่งซ้าย: Timeline -->
-                    <div class="bg-white rounded-lg p-2">
-                        <?php renderTimeline($req['status'], $req['reject_reason'] ?? ''); ?>
-                    </div>
+                    <!-- Timeline Section -->
+                <div class="mb-4">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4 border-l-4 border-blue-600 pl-3">ขั้นตอนการดำเนินงาน</h3>
+                    <?= renderTimeline($req) ?>
+                </div>
 
                     <!-- ฝั่งขวา: Action Buttons & Info -->
                     <div class="bg-blue-50/50 rounded-xl p-6 border border-blue-50 h-full flex flex-col justify-center">

@@ -180,7 +180,30 @@ try {
     // 🟢 10. บันทึก Log ด้วยระบบใหม่
     saveLog($conn, 'ADMIN_EDIT', "แอดมินแก้ไขข้อมูลและอัปเดตสถานะคำขอของ $full_name (ID: $id)", $id, $old_data, $new_data);
 
-    // 🟢 11. ตรวจสอบ Action ว่าให้ไปหน้าไหนต่อ (Work-flow)
+    // 🟢 11. ส่งการแจ้งเตือนทาง LINE (ถ้ามีการผูกไว้ และสถานะเปลี่ยน)
+    if (!empty($old_data['line_user_id']) && $status !== $old_data['status']) {
+        $status_labels = [
+            'PENDING_CHECK' => 'รอตรวจสอบ',
+            'PENDING_APPROVAL' => 'รออนุมัติ',
+            'SENT_TO_PRINT' => 'รอพิมพ์บัตร',
+            'READY_PICKUP' => 'บัตรเสร็จแล้ว (กรุณามารับบัตร)',
+            'COMPLETED' => 'รับบัตรเรียบร้อยแล้ว',
+            'REJECTED' => 'คำขอถูกปฏิเสธ'
+        ];
+        $current_label = $status_labels[$status] ?? $status;
+        
+        $msg = "📢 แจ้งเตือนสถานะการทำบัตร\n"
+             . "คุณ {$full_name}\n"
+             . "สถานะเปลี่ยนเป็น: {$current_label}";
+        
+        if ($status === 'REJECTED' && !empty($reject_reason)) {
+            $msg .= "\nเหตุผล: {$reject_reason}";
+        }
+        
+        sendLineMessage($old_data['line_user_id'], $msg);
+    }
+
+    // 🟢 12. ตรวจสอบ Action ว่าให้ไปหน้าไหนต่อ (Work-flow)
     $save_action = $_POST['save_action'] ?? 'save';
     $user_role = $_SESSION['role'] ?? 'Staff';
 

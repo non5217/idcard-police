@@ -93,6 +93,33 @@ if ($action === 'update_status') {
         ['status' => $status, 'reject_reason' => $reason]
         );
 
+        // 🟢 6. ส่งการแจ้งเตือนทาง LINE (ถ้ามีการผูกไว้)
+        $stmt_line = $conn->prepare("SELECT line_user_id FROM idcard_requests WHERE id = ?");
+        $stmt_line->execute([$id]);
+        $line_user_id = $stmt_line->fetchColumn();
+
+        if ($line_user_id) {
+            $status_labels = [
+                'PENDING_CHECK' => 'รอตรวจสอบ',
+                'PENDING_APPROVAL' => 'รออนุมัติ',
+                'SENT_TO_PRINT' => 'รอพิมพ์บัตร',
+                'READY_PICKUP' => 'บัตรเสร็จแล้ว (กรุณามารับบัตร)',
+                'COMPLETED' => 'รับบัตรเรียบร้อยแล้ว',
+                'REJECTED' => 'คำขอถูกปฏิเสธ'
+            ];
+            $current_label = $status_labels[$status] ?? $status;
+            
+            $msg = "📢 แจ้งเตือนสถานะการทำบัตร\n"
+                 . "คุณ {$req_name}\n"
+                 . "สถานะใหม่: {$current_label}";
+            
+            if ($status === 'REJECTED' && $reason) {
+                $msg .= "\nเหตุผล: {$reason}";
+            }
+            
+            sendLineMessage($line_user_id, $msg);
+        }
+
         echo json_encode(['success' => true]);
         exit();
 

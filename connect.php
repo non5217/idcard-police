@@ -71,4 +71,40 @@ function saveLog($conn, $action_type, $action_detail, $target_id = null, $old_da
         error_log("Log Insert Error: " . $e->getMessage());
     }
 }
+
+// 🟢 3. LINE Messaging API Configuration
+define('LINE_CHANNEL_ACCESS_TOKEN', ''); // ใส่ Channel Access Token จาก LINE Developers
+
+function sendLineMessage($to, $message) {
+    if (empty(LINE_CHANNEL_ACCESS_TOKEN) || empty($to)) return false;
+
+    $url = 'https://api.line.me/v2/bot/message/push';
+    $data = [
+        'to' => $to,
+        'messages' => [['type' => 'text', 'text' => $message]]
+    ];
+
+    $post = json_encode($data);
+    $headers = [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . LINE_CHANNEL_ACCESS_TOKEN
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    
+    $result = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+
+    if ($err) {
+        error_log("LINE Push Error: " . $err);
+        return false;
+    }
+    return $result;
+}
 ?>

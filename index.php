@@ -201,8 +201,7 @@ endif; ?>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
-
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 max-w-4xl w-full">
             <div onclick="openPdpaModal()"
                 class="bg-white rounded-xl shadow-lg p-5 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-blue-500">
                 <div
@@ -229,20 +228,6 @@ endif; ?>
                     ตรวจสอบสถานะ
                 </button>
             </div>
-
-            <a href="login.php"
-                class="bg-white rounded-xl shadow-lg p-5 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-red-500 block">
-                <div
-                    class="w-14 h-14 md:w-20 md:h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 text-red-600">
-                    <i class="fa-solid fa-user-lock text-2xl md:text-4xl"></i>
-                </div>
-                <h2 class="text-lg md:text-2xl font-bold text-gray-800 mb-1 md:mb-2">Admin</h2>
-                <p class="text-xs md:text-base text-gray-500 hidden md:block">เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ออกบัตร<br>และอนุมัติการออกบัตร</p>
-                <span class="mt-4 md:mt-6 bg-red-600 text-white px-5 py-2 rounded-full text-sm md:text-base font-bold hover:bg-red-700 w-full block shadow-md">
-                    เข้าสู่ระบบ SSO
-                </span>
-            </a>
-
         </div>
     </main>
 

@@ -204,41 +204,41 @@ endif; ?>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl w-full">
 
             <div onclick="openPdpaModal()"
-                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-blue-500">
+                class="bg-white rounded-xl shadow-lg p-5 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-blue-500">
                 <div
-                    class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-                    <i class="fas fa-id-card text-4xl"></i>
+                    class="w-14 h-14 md:w-20 md:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 text-blue-600">
+                    <i class="fas fa-id-card text-2xl md:text-4xl"></i>
                 </div>
-                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">ขอมีบัตร/เปลี่ยนบัตร</h2>
-                <p class="text-gray-500">สำหรับข้าราชการตำรวจที่ต้องการ<br>ทำบัตรใหม่ หรือเปลี่ยนบัตรเดิม</p>
-                <button class="mt-6 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 w-full">
+                <h2 class="text-lg md:text-2xl font-bold text-gray-800 mb-1 md:mb-2">ขอมีบัตร/เปลี่ยนบัตร</h2>
+                <p class="text-xs md:text-base text-gray-500 hidden md:block">สำหรับข้าราชการตำรวจที่ต้องการ<br>ทำบัตรใหม่ หรือเปลี่ยนบัตรเดิม</p>
+                <button class="mt-4 md:mt-6 bg-blue-600 text-white px-5 py-2 rounded-full text-sm md:text-base font-bold hover:bg-blue-700 w-full shadow-md">
                     คลิกเพื่อดำเนินการ
                 </button>
             </div>
 
             <div onclick="openModal('TRACK')"
-                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-yellow-500">
+                class="bg-white rounded-xl shadow-lg p-5 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-yellow-500">
                 <div
-                    class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-600">
-                    <i class="fas fa-search text-4xl"></i>
+                    class="w-14 h-14 md:w-20 md:h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 text-yellow-600">
+                    <i class="fas fa-search text-2xl md:text-4xl"></i>
                 </div>
-                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">ติดตามสถานะ</h2>
-                <p class="text-gray-500">ตรวจสอบความคืบหน้าของคำขอ<br>หรือสถานะการจัดพิมพ์บัตร</p>
+                <h2 class="text-lg md:text-2xl font-bold text-gray-800 mb-1 md:mb-2">ติดตามสถานะ</h2>
+                <p class="text-xs md:text-base text-gray-500 hidden md:block">ตรวจสอบความคืบหน้าของคำขอ<br>หรือสถานะการจัดพิมพ์บัตร</p>
                 <button
-                    class="mt-6 bg-yellow-500 text-white px-6 py-2 rounded-full font-bold hover:bg-yellow-600 w-full">
+                    class="mt-4 md:mt-6 bg-yellow-500 text-white px-5 py-2 rounded-full text-sm md:text-base font-bold hover:bg-yellow-600 w-full shadow-md">
                     ตรวจสอบสถานะ
                 </button>
             </div>
 
             <a href="login.php"
-                class="bg-white rounded-xl shadow-lg p-6 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-red-500 block">
+                class="bg-white rounded-xl shadow-lg p-5 md:p-8 text-center cursor-pointer transition duration-300 hover-card border-t-4 border-red-500 block">
                 <div
-                    class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 text-red-600">
-                    <i class="fa-solid fa-user-lock text-4xl"></i>
+                    class="w-14 h-14 md:w-20 md:h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6 text-red-600">
+                    <i class="fa-solid fa-user-lock text-2xl md:text-4xl"></i>
                 </div>
-                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">Admin</h2>
-                <p class="text-gray-500">เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ออกบัตร<br>และอนุมัติการออกบัตร</p>
-                <span class="mt-6 bg-red-600 text-white px-6 py-2 rounded-full font-bold hover:bg-red-700 w-full block">
+                <h2 class="text-lg md:text-2xl font-bold text-gray-800 mb-1 md:mb-2">Admin</h2>
+                <p class="text-xs md:text-base text-gray-500 hidden md:block">เข้าสู่ระบบสำหรับเจ้าหน้าที่ผู้ออกบัตร<br>และอนุมัติการออกบัตร</p>
+                <span class="mt-4 md:mt-6 bg-red-600 text-white px-5 py-2 rounded-full text-sm md:text-base font-bold hover:bg-red-700 w-full block shadow-md">
                     เข้าสู่ระบบ SSO
                 </span>
             </a>

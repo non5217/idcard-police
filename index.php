@@ -149,20 +149,8 @@ endif; ?>
                 <i class="fas fa-file-alt text-indigo-500 mr-2"></i> เอกสารที่ต้องเตรียมก่อนยื่นคำขอ
             </h2>
 
-            <!-- Mobile View: Small Buttons (ลดขนาดตามสั่ง) -->
-            <div class="flex md:hidden gap-3 justify-center mb-2">
-                <button onclick="showDocModal('NEW')" class="flex-1 bg-blue-50 text-blue-700 py-3 px-2 rounded-xl font-bold border border-blue-200 shadow-sm flex flex-col items-center gap-1 active:scale-95 transition">
-                    <i class="fas fa-id-badge text-xl text-blue-600"></i>
-                    <span class="text-[11px]">กรณีทำบัตรใหม่</span>
-                </button>
-                <button onclick="showDocModal('UPDATE')" class="flex-1 bg-amber-50 text-amber-800 py-3 px-2 rounded-xl font-bold border border-amber-200 shadow-sm flex flex-col items-center gap-1 active:scale-95 transition">
-                    <i class="fas fa-sync-alt text-xl text-amber-600"></i>
-                    <span class="text-[11px]">เปลี่ยนบัตร/หาย</span>
-                </button>
-            </div>
-
-            <!-- Desktop View: Full Detail Grid -->
-            <div class="hidden md:grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Detailed Grid (Restored on Mobile for visibility) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div class="bg-blue-50 rounded-lg p-6 border border-blue-100 shadow-sm">
                     <h3 class="text-lg font-bold text-blue-800 mb-4 border-b border-blue-200 pb-2">
                         <i class="fas fa-id-badge mr-2"></i> กรณีทำบัตรใหม่ (ครั้งแรก)
@@ -391,52 +379,6 @@ endif; ?>
     </div>
 
     <script>
-        function showDocModal(type) {
-            let title = '';
-            let content = '';
-            let icon = 'info';
-            
-            if(type === 'NEW') {
-                title = 'เอกสาร: กรณีทำบัตรใหม่ (ครั้งแรก)';
-                icon = 'info';
-                content = `
-                    <div class="text-left font-sarabun">
-                        <ul class="space-y-3">
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 1. สำเนาคำสั่งแต่งตั้ง</li>
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 2. สำเนาทะเบียนบ้าน</li>
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 3. หนังสือยืนยันกรุ๊ปเลือด (ใบรับรองแพทย์)</li>
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 4. รูปถ่าย</li>
-                        </ul>
-                    </div>
-                `;
-            } else {
-                title = 'เอกสาร: กรณีเปลี่ยน/หาย/หมดอายุ';
-                icon = 'warning';
-                content = `
-                    <div class="text-left font-sarabun">
-                        <ul class="space-y-3">
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 1. สำเนาคำสั่งแต่งตั้ง (ถ้ามี)</li>
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 2. สำเนาทะเบียนบ้าน</li>
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 3. รูปถ่าย</li>
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 4. บัตรเก่า (ถ้ามี)</li>
-                            <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i> 5. ใบแจ้งความ (กรณีบัตรหาย)</li>
-                        </ul>
-                    </div>
-                `;
-            }
-
-            Swal.fire({
-                title: title,
-                html: content,
-                icon: icon,
-                confirmButtonText: 'รับทราบ',
-                confirmButtonColor: '#3085d6',
-                customClass: {
-                    container: 'font-sarabun'
-                }
-            });
-        }
-
         function openPdpaModal() {
             document.getElementById('pdpaModal').classList.remove('hidden');
             document.getElementById('pdpaCheckbox').checked = false;
